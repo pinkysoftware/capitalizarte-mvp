@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Capitalizarte",
+    "slug": "capitalizarte-app-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "expo-asset"
+    ],
+    "android": {
+      "package": "com.anonymous.capitalizarteappmvp"
+    }
+  }
+}

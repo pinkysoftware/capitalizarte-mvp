@@ -4,9 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, Linking } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { api, clearToken, getToken, hydrateToken } from './src/services/api';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
-
-const theme = {
+const darkTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
@@ -18,26 +18,35 @@ const theme = {
   },
 };
 
+const lightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#F5F5F5',
+    card: '#FFFFFF',
+    text: '#1A1A1A',
+    border: 'rgba(0, 0, 0, 0.1)',
+    primary: '#D4A017',
+  },
+};
+
 function useDeepLink() {
   const [deepLinkRoute, setDeepLinkRoute] = useState(null);
 
   useEffect(() => {
     const handleUrl = (event) => {
       const url = event.url || '';
-      // If URL contains reset-password or login, go to Login
       if (url.includes('reset-password') || url.includes('login') || url.includes('screen=login')) {
         setDeepLinkRoute('Login');
       }
     };
 
-    // Check initial URL
     Linking.getInitialURL().then((url) => {
       if (url && (url.includes('reset-password') || url.includes('login'))) {
         setDeepLinkRoute('Login');
       }
     });
 
-    // Listen for deep links
     const subscription = Linking.addEventListener('url', handleUrl);
     return () => subscription.remove();
   }, []);
@@ -45,7 +54,8 @@ function useDeepLink() {
   return deepLinkRoute;
 }
 
-export default function App() {
+function AppContent() {
+  const { isDark } = useTheme();
   const [booting, setBooting] = useState(true);
   const [initialRouteName, setInitialRouteName] = useState('Login');
   const deepLinkRoute = useDeepLink();
@@ -80,21 +90,28 @@ export default function App() {
     })();
   }, []);
 
+  const currentTheme = isDark ? darkTheme : lightTheme;
+
   if (booting) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0D0F14', alignItems: 'center', justifyContent: 'center' }}>
-        <StatusBar style="light" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#D4A017" />
       </View>
     );
   }
 
   return (
-    
-      <NavigationContainer theme={theme}>
-        <StatusBar style="light" />
-        <AppNavigator initialRouteName={initialRouteName} />
-      </NavigationContainer>
-    
+    <NavigationContainer theme={currentTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <AppNavigator initialRouteName={initialRouteName} />
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <
+      <AppContent />
+    </
   );
 }

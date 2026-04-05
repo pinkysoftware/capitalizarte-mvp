@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -32,18 +32,107 @@ const naturalezas = ['FIJO', 'VARIABLE'];
 const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
 const expenseCategories = ['Vivienda', 'Alimentacion', 'Transporte', 'Salud', 'Entretenimiento', 'Deuda', 'Inversion', 'Otro'];
 
+// Hook para Web Speech API
+function useSpeechRecognition() {
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [supported, setSupported] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSupported(true);
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'es-AR';
+
+      recognitionRef.current.onresult = (event) => {
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          final += event.results[i][0].transcript;
+        }
+        setTranscript(final);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        if (event.error !== 'no-speech') {
+          console.log('Speech error:', event.error);
+        }
+        setListening(false);
+      };
+
+      recognitionRef.current.onend = () => setListening(false);
+    }
+  }, []);
+
+  const start = () => {
+    if (recognitionRef.current && !listening) {
+      setTranscript('');
+      try {
+        recognitionRef.current.start();
+        setListening(true);
+      } catch (e) {
+        console.log('Start error:', e);
+      }
+    }
+  };
+
+  const stop = () => {
+    if (recognitionRef.current && listening) {
+      recognitionRef.current.stop();
+      setListening(false);
+    }
+  };
+
+  return { listening, transcript, supported, start, stop };
+}
+
 export default function AddTransactionVoice({ navigation, route }) {
   const tipoInicial = route?.params?.tipo || 'GASTO';
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Modo manual
   const [tipo, setTipo] = useState(tipoInicial);
   const [naturaleza, setNaturaleza] = useState('VARIABLE');
   const [categoria, setCategoria] = useState('');
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
+
+  const { listening, transcript, supported, start, stop } = useSpeechRecognition();
+
+  // Cuando termina de hablar, si hay texto, lo procesamos
+  useEffect(() => {
+    if (transcript && !listening && transcript.length > 2) {
+      setInput(transcript);
+      const result = parseNaturalTransaction(transcript);
+      if (result) {
+        setParsed(result);
+        setTipo(result.tipo);
+        setCategoria(result.categoria);
+        setMonto(result.monto.toString());
+        setDescripcion(result.descripcion);
+      }
+    }
+  }, [listening, transcript]);
+
+  const handleVoicePress = () => {
+    if (listening) {
+      stop();
+    } else {
+      if (!supported) {
+        Alert.alert(
+          'Voz no disponible',
+          'Tu dispositivo no soporta reconocimiento de voz. Escribí naturalmente en el campo de texto.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      start();
+    }
+  };
 
   const handleParse = () => {
     if (!input.trim()) return;
@@ -60,7 +149,7 @@ export default function AddTransactionVoice({ navigation, route }) {
   };
 
   const handleSubmit = async () => {
-    const finalMonto = parsed ? parseFloat(monto) : parseFloat(monto);
+    const finalMonto = parseFloat(monto);
     if (!finalMonto || finalMonto <= 0) {
       return Alert.alert('Monto inválido', 'Ingresá un monto mayor a 0');
     }
@@ -92,14 +181,14 @@ export default function AddTransactionVoice({ navigation, route }) {
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {/* INPUT NATURAL */}
+        {/* VOICE INPUT */}
         <View style={styles.voiceCard}>
-          <Text style={styles.voiceTitle}>✍️ Escribí自然的</Text>
-          <Text style={styles.voiceSubtitle}>Ejemplo: "cafe $4.50", "comida 500", "salario 50000"</Text>
+          <Text style={styles.voiceTitle}>🎤 Hablá o escribí自然的</Text>
+          <Text style={styles.voiceSubtitle}>Ejemplo: "cafe cuatro cincuenta" o "comida quinientos"</Text>
           <View style={styles.inputRow}>
             <TextInput
               style={styles.voiceInput}
-              placeholder="cafe $4.50..."
+              placeholder="Escribí o presioná el micrófono..."
               placeholderTextColor={COLORS.textMuted}
               value={input}
               onChangeText={setInput}
@@ -107,16 +196,29 @@ export default function AddTransactionVoice({ navigation, route }) {
               returnKeyType="send"
               autoCapitalize="none"
             />
-            <Pressable style={styles.parseButton} onPress={handleParse}>
-              <Text style={styles.parseButtonText}>→</Text>
+            <Pressable
+              style={[styles.micButton, listening && styles.micButtonActive]}
+              onPress={handleVoicePress}
+            >
+              {listening ? (
+                <ActivityIndicator color="#111" size="small" />
+              ) : (
+                <Text style={styles.micButtonText}>🎤</Text>
+              )}
             </Pressable>
           </View>
 
+          {listening && (
+            <View style={styles.listeningIndicator}>
+              <Text style={styles.listeningText}>🎙️ Escuchando... (hablá en español)</Text>
+            </View>
+          )}
+
           {parsed && (
             <View style={styles.parsedPreview}>
-              <Text style={styles.parsedTitle}>Preview:</Text>
+              <Text style={styles.parsedTitle}>✓ Detectado:</Text>
               <Text style={styles.parsedText}>{formatTransactionPreview(parsed)}</Text>
-              <Text style={styles.parsedHint}>Podés editar los campos abajo antes de confirmar</Text>
+              <Text style={styles.parsedHint}>Editá los campos abajo antes de confirmar</Text>
             </View>
           )}
         </View>
@@ -220,10 +322,13 @@ const styles = StyleSheet.create({
   voiceSubtitle: { color: COLORS.textMuted, fontSize: 13 },
   inputRow: { flexDirection: 'row', gap: 10 },
   voiceInput: { flex: 1, backgroundColor: COLORS.surfaceSoft, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, fontSize: 16, borderWidth: 1, borderColor: COLORS.border },
-  parseButton: { backgroundColor: COLORS.primary, borderRadius: 14, width: 48, alignItems: 'center', justifyContent: 'center' },
-  parseButtonText: { color: '#111', fontSize: 20, fontWeight: '800' },
-  parsedPreview: { backgroundColor: COLORS.surfaceSoft, borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: COLORS.primary },
-  parsedTitle: { color: COLORS.primary, fontSize: 12, fontWeight: '800', marginBottom: 4 },
+  micButton: { backgroundColor: COLORS.primary, borderRadius: 14, width: 48, alignItems: 'center', justifyContent: 'center' },
+  micButtonActive: { backgroundColor: COLORS.red },
+  micButtonText: { fontSize: 20 },
+  listeningIndicator: { backgroundColor: 'rgba(211, 47, 47, 0.15)', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
+  listeningText: { color: COLORS.red, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  parsedPreview: { backgroundColor: 'rgba(46, 204, 64, 0.12)', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: COLORS.green },
+  parsedTitle: { color: COLORS.green, fontSize: 12, fontWeight: '800', marginBottom: 4 },
   parsedText: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
   parsedHint: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
   sectionCard: { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border, gap: 10 },
@@ -238,7 +343,7 @@ const styles = StyleSheet.create({
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: COLORS.surfaceSoft, borderWidth: 1, borderColor: COLORS.border },
   categoryChipText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
-  categoryChipTextActive: { color: '#111', backgroundColor: COLORS.primary },
+  categoryChipTextActive: { color: '#111' },
   categoryChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   montoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   montoSymbol: { color: COLORS.text, fontSize: 24, fontWeight: '800' },

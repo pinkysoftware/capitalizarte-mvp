@@ -16,7 +16,10 @@
       "expo-asset"
     ],
     "android": {
-      "package": "com.anonymous.capitalizarteappmvp"
+      "package": "com.capitalizarte.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     }
   }
 }

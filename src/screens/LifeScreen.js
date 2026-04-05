@@ -1,23 +1,9 @@
-import React from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
-import { getStoredProfilePhoto } from '../services/profileMedia';
+import { C, S, R, SHADOW } from '../theme';
 
-const COLORS = {
-  background: '#0D0F14',
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  primary: '#D4A017',
-  primaryBright: '#F0C040',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-  green: '#2ECC40',
-  red: '#E53935',
-};
-
-const AVATARS = { '1': '🧑‍💼', '2': '🧑‍🎓', '3': '🧑‍🚀', '4': '🧑‍🔧', '5': '🧑‍💻' };
+const AVATARS = { '1': '🧑💼', '2': '🧑🎓', '3': '🧑🚀', '4': '🧑🔧', '5': '🧑💻' };
 
 function StatCard({ label, value, hint, accent }) {
   return (
@@ -29,7 +15,7 @@ function StatCard({ label, value, hint, accent }) {
   );
 }
 
-function LifeBar({ label, value, max = 100, color = COLORS.primary }) {
+function LifeBar({ label, value, max = 100, color = C.primary }) {
   const safeValue = Number(value || 0);
   const pct = Math.max(0, Math.min(100, max > 0 ? (safeValue / max) * 100 : 0));
   return (
@@ -49,19 +35,15 @@ export default function LifeScreen() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [dashboard, setDashboard] = useState(null);
-  const [photoUri, setPhotoUri] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [profileRes, dashboardRes] = await Promise.all([api.getProfile(), api.dashboard()]);
-        const user = profileRes.user || null;
-        setProfile(user);
-        setDashboard(dashboardRes);
-        const storedPhoto = await getStoredProfilePhoto(user?.email || '');
-        setPhotoUri(storedPhoto || null);
+        const [profileRes, dashRes] = await Promise.all([api.getProfile(), api.getDashboard()]);
+        setProfile(profileRes.user || profileRes);
+        setDashboard(dashRes);
       } catch (e) {
-        Alert.alert('No pudimos cargar esta vista', e.message);
+        console.log('Error:', e.message);
       } finally {
         setLoading(false);
       }
@@ -69,23 +51,23 @@ export default function LifeScreen() {
   }, []);
 
   const metrics = useMemo(() => {
-    const gastosFijosMensuales = Number(dashboard?.gastos_fijos || 0) || Number(profile?.gastos_fijos || 0);
+    const gastosFijos = Number(dashboard?.gastos || 0) || Number(profile?.gastos_fijos || 0);
     const saldo = Number(dashboard?.saldo || 0);
     const now = new Date();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const costoDelDia = daysInMonth > 0 ? gastosFijosMensuales / daysInMonth : 0;
+    const costoDelDia = daysInMonth > 0 ? gastosFijos / daysInMonth : 0;
     const diasDeVida = costoDelDia > 0 ? saldo / costoDelDia : 0;
     const diasCubiertos = Math.max(0, diasDeVida);
     const diasAdeudados = Math.max(0, Math.abs(diasDeVida < 0 ? diasDeVida : 0));
     const barMax = Math.max(daysInMonth, diasCubiertos, diasAdeudados, 1);
-    return { gastosFijosMensuales, saldo, daysInMonth, costoDelDia, diasDeVida, diasCubiertos, diasAdeudados, barMax };
+    return { gastosFijos, saldo, daysInMonth, costoDelDia, diasDeVida, diasCubiertos, diasAdeudados, barMax };
   }, [profile, dashboard]);
 
   if (loading) {
-    return <View style={styles.loadingScreen}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+    return <View style={styles.loading}><ActivityIndicator color={C.primary} size="large" /></View>;
   }
 
-  const displayName = profile?.apodo || profile?.nombre || 'Usuario';
+  const name = profile?.apodo || profile?.nombre || 'Usuario';
   const emoji = AVATARS[String(profile?.avatar_id || '1')] || '🧑';
   const insightText = metrics.diasDeVida >= 0
     ? `Hoy tenés ${metrics.diasCubiertos.toFixed(1)} días de vida financiera cubiertos.`
@@ -93,56 +75,61 @@ export default function LifeScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.heroCard}>
-        <View style={styles.avatarWrap}>{photoUri ? <Image source={{ uri: photoUri }} style={styles.photoAvatar} /> : <Text style={styles.heroEmoji}>{emoji}</Text>}</View>
-        <Text style={styles.eyebrow}>VIDA FINANCIERA</Text>
-        <Text style={styles.title}>{displayName}</Text>
-        <Text style={styles.subtitle}>Esta vista traduce tu saldo mensual en tiempo de vida financiera según tus gastos fijos del mes.</Text>
+      <View style={styles.hero}>
+        <Text style={styles.heroEmoji}>{emoji}</Text>
+        <Text style={styles.heroTitle}>{name}</Text>
+        <Text style={styles.heroSub}>Tu saldo en tiempo de vida financiera</Text>
       </View>
 
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Saldo y tiempo</Text>
-        <View style={styles.statsGrid}>
-          <StatCard label="Saldo actual" value={`$${metrics.saldo.toFixed(2)}`} accent={metrics.saldo >= 0 ? COLORS.primaryBright : COLORS.red} />
-          <StatCard label="Costo del día" value={`$${metrics.costoDelDia.toFixed(2)}`} hint={`Gastos fijos del mes / ${metrics.daysInMonth} días`} />
-          <StatCard label="Gastos fijos del mes" value={`$${metrics.gastosFijosMensuales.toFixed(2)}`} />
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Balance actual</Text>
+        <Text style={styles.balanceAmount}>${metrics.saldo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</Text>
+        <Text style={[styles.insight, metrics.diasDeVida < 0 && { color: C.red }]}>{insightText}</Text>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Costo por día</Text>
+          <Text style={styles.statValue}>${metrics.costoDelDia.toFixed(2)}</Text>
         </View>
-        <Text style={[styles.bigInsight, metrics.diasDeVida < 0 && { color: COLORS.red }]}>{insightText}</Text>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Gastos fijos / mes</Text>
+          <Text style={styles.statValue}>${metrics.gastosFijos.toLocaleString('es-AR', { minimumFractionDigits: 0 })}</Text>
+        </View>
       </View>
 
-      <View style={styles.sectionCard}>
+      <View style={styles.barsSection}>
         <Text style={styles.sectionTitle}>Barras de vida</Text>
-        <LifeBar label="Días cubiertos" value={metrics.diasCubiertos} max={metrics.barMax} color={COLORS.green} />
-        <LifeBar label="Días adeudados" value={metrics.diasAdeudados} max={metrics.barMax} color={COLORS.red} />
-        <LifeBar label="Salud financiera" value={Number(dashboard?.salud_financiera || 0)} max={100} color={metrics.diasDeVida < 0 ? COLORS.red : COLORS.primary} />
+        <LifeBar label="Días cubiertos" value={metrics.diasCubiertos} max={metrics.barMax} color={C.green} />
+        <LifeBar label="Días adeudados" value={metrics.diasAdeudados} max={metrics.barMax} color={C.red} />
+        <LifeBar label="Salud financiera" value={Number(dashboard?.salud_financiera || 0)} max={100} color={metrics.diasDeVida < 0 ? C.red : C.primary} />
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
-  loadingScreen: { flex: 1, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center' },
-  content: { padding: 20, paddingBottom: 36, gap: 16 },
-  heroCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 24, padding: 22, alignItems: 'center' },
-  avatarWrap: { width: 96, height: 96, borderRadius: 48, backgroundColor: COLORS.surfaceSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 14, overflow: 'hidden' },
-  photoAvatar: { width: '100%', height: '100%' },
-  heroEmoji: { fontSize: 44 },
-  eyebrow: { color: COLORS.primaryBright, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: 10 },
-  title: { color: COLORS.text, fontSize: 28, fontWeight: '800', marginBottom: 8 },
-  subtitle: { color: COLORS.muted, textAlign: 'center', lineHeight: 21 },
-  sectionCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 18, gap: 12 },
-  sectionTitle: { color: COLORS.primary, fontSize: 18, fontWeight: '700' },
-  statsGrid: { gap: 10 },
-  statCard: { backgroundColor: COLORS.surfaceSoft, borderRadius: 16, padding: 14 },
-  statLabel: { color: COLORS.muted, fontSize: 13, marginBottom: 6 },
-  statValue: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
-  statHint: { color: COLORS.muted, marginTop: 4, fontSize: 12 },
-  bigInsight: { color: COLORS.text, fontSize: 16, lineHeight: 24, fontWeight: '700' },
-  barCard: { gap: 8 },
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { padding: S.lg, paddingBottom: 100, gap: S.lg },
+  loading: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  hero: { alignItems: 'center', gap: S.xs },
+  heroEmoji: { fontSize: 56 },
+  heroTitle: { fontSize: 28, fontWeight: '800', color: C.text },
+  heroSub: { color: C.textSecondary, fontSize: 14 },
+  balanceCard: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.sm },
+  balanceLabel: { color: C.textSecondary, fontSize: 13 },
+  balanceAmount: { fontSize: 36, fontWeight: '800', color: C.text },
+  insight: { color: C.green, fontSize: 15, fontWeight: '600' },
+  statsGrid: { flexDirection: 'row', gap: S.sm },
+  statCard: { flex: 1, backgroundColor: C.surface, borderRadius: R.md, padding: S.md },
+  statLabel: { color: C.textSecondary, fontSize: 12, marginBottom: 4 },
+  statValue: { fontSize: 18, fontWeight: '700', color: C.text },
+  barsSection: { gap: S.sm },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  barCard: { backgroundColor: C.surface, borderRadius: R.md, padding: S.md, gap: S.sm },
   barTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  barLabel: { color: COLORS.text, fontWeight: '700' },
-  barValue: { fontWeight: '800' },
-  track: { height: 14, backgroundColor: COLORS.surfaceSoft, borderRadius: 999, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 999 },
+  barLabel: { fontSize: 14, fontWeight: '600', color: C.text },
+  barValue: { fontSize: 14, fontWeight: '700' },
+  track: { height: 8, backgroundColor: C.border, borderRadius: 4 },
+  fill: { height: '100%', borderRadius: 4 },
 });

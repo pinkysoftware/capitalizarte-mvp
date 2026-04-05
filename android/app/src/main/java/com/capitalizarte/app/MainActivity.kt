@@ -1,4 +1,4 @@
-package com.anonymous.capitalizarteappmvp
+package com.capitalizarte.app
 
 import android.os.Build
 import android.os.Bundle

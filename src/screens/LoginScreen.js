@@ -6,42 +6,13 @@ import {
   Alert,
   Pressable,
   StyleSheet,
-  ScrollView,
   Image,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { api, setToken } from '../services/api';
-import { isValidEmail } from '../services/validators';
-
-const COLORS = {
-  background: '#0D0F14',
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  primary: '#D4A017',
-  primaryBright: '#F0C040',
-  text: '#E8E8E8',
-  textMuted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-};
-
-function Field({ label, value, onChangeText, placeholder, secureTextEntry = false, keyboardType = 'default' }) {
-  return (
-    <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.textMuted}
-        secureTextEntry={secureTextEntry}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        style={styles.input}
-      />
-    </View>
-  );
-}
+import { C, S, R, card, h1, h2, muted, btnPrimary, btnPrimaryText, btnSecondary, btnSecondaryText, input } from '../theme';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -49,75 +20,116 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const login = async () => {
-    const safeEmail = email.trim().toLowerCase();
-    if (!isValidEmail(safeEmail)) {
-      return Alert.alert('Correo inválido', 'Ingresá un correo válido.');
+    if (!email.trim() || !password) {
+      return Alert.alert(' Campos requeridos', 'Ingresá email y contraseña.');
     }
-    if (!password || password.length < 6) {
-      return Alert.alert('Contraseña inválida', 'Ingresá una contraseña válida.');
-    }
-
     setLoading(true);
     try {
-      const res = await api.login({ email: safeEmail, password });
+      const res = await api.login({ email: email.trim().toLowerCase(), password });
       await setToken(res.token);
       navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
     } catch (e) {
-      Alert.alert('No pudimos iniciar sesión', e.message);
+      Alert.alert(' Error de acceso', e.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.heroCard}>
-          <Image source={require('../../assets/capitalizarte-eye.png')} style={styles.logoImage} resizeMode="contain" />
-          <Text style={styles.eyebrow}>CAPITALIZARTE</Text>
-          <Text style={styles.title}>Ingresá a tu cuenta</Text>
-          <Text style={styles.subtitle}>Volvé a tu dashboard para seguir registrando movimientos y revisando tu avance.</Text>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View style={styles.container}>
+        
+        {/* Logo */}
+        <View style={styles.logoWrap}>
+          <Image source={require('../../assets/capitalizarte-eye.png')} style={styles.logo} resizeMode="contain" />
         </View>
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Acceso</Text>
-          <Field label="Correo electrónico" placeholder="tuemail@ejemplo.com" value={email} onChangeText={setEmail} keyboardType="email-address" />
-          <Field label="Contraseña" placeholder="Tu contraseña" value={password} onChangeText={setPassword} secureTextEntry />
+        {/* Título */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Capitalizarte</Text>
+          <Text style={styles.subtitle}>Tu salud financiera en orden</Text>
         </View>
 
-        <Pressable style={[styles.primaryButton, loading && { opacity: 0.7 }]} onPress={login} disabled={loading}>
-          {loading ? <ActivityIndicator color="#111111" /> : <Text style={styles.primaryButtonText}>Ingresar</Text>}
+        {/* Form */}
+        <View style={styles.form}>
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor={C.textTertiary}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Contraseña"
+            placeholderTextColor={C.textTertiary}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            style={[styles.input, { marginTop: S.sm }]}
+          />
+        </View>
+
+        {/* Olvidaste contraseña */}
+        <Pressable style={styles.forgotLink} onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text style={styles.forgotText}>¿Olvidaste tu clave?</Text>
         </Pressable>
 
-        <Pressable style={styles.linkButton} onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={styles.linkButtonText}>Olvidé mi clave</Text>
+        {/* Botón ingresar */}
+        <Pressable style={[styles.primaryBtn, loading && styles.btnDisabled]} onPress={login} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.primaryBtnText}>Ingresar</Text>
+          )}
         </Pressable>
 
-        <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.secondaryButtonText}>Crear cuenta nueva</Text>
+        {/* Crear cuenta */}
+        <Pressable style={styles.secondaryBtn} onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.secondaryBtnText}>Crear cuenta nueva</Text>
         </Pressable>
-      </ScrollView>
+
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 20, paddingBottom: 48, gap: 16 },
-  heroCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 24, padding: 22, alignItems: 'center' },
-  logoImage: { width: 92, height: 92, marginBottom: 16 },
-  eyebrow: { color: COLORS.primaryBright, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: 10, textAlign: 'center' },
-  title: { color: COLORS.text, fontSize: 28, lineHeight: 34, fontWeight: '800', marginBottom: 10, textAlign: 'center' },
-  subtitle: { color: COLORS.textMuted, fontSize: 15, lineHeight: 22, textAlign: 'center' },
-  sectionCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 18, gap: 14 },
-  sectionTitle: { color: COLORS.primary, fontSize: 18, fontWeight: '700' },
-  fieldWrap: { gap: 8 },
-  fieldLabel: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
-  input: { backgroundColor: COLORS.surfaceSoft, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text, fontSize: 15 },
-  primaryButton: { marginTop: 6, backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonText: { color: '#111111', fontSize: 16, fontWeight: '800' },
-  linkButton: { alignItems: 'center', paddingVertical: 6 },
-  linkButtonText: { color: COLORS.primaryBright, fontSize: 14, fontWeight: '700' },
-  secondaryButton: { borderRadius: 16, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-  secondaryButtonText: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  screen: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1, padding: S.lg, justifyContent: 'center', gap: S.lg },
+  logoWrap: { alignItems: 'center', marginBottom: S.md },
+  logo: { width: 72, height: 72 },
+  header: { alignItems: 'center', gap: S.xs },
+  title: { ...h1(), textAlign: 'center' },
+  subtitle: { ...muted(), textAlign: 'center' },
+  form: { gap: S.sm },
+  input: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: R.md,
+    paddingHorizontal: S.md,
+    paddingVertical: 16,
+    color: C.text,
+    fontSize: 16,
+  },
+  forgotLink: { alignItems: 'flex-end' },
+  forgotText: { color: C.primary, fontSize: 14, fontWeight: '600' },
+  primaryBtn: {
+    backgroundColor: C.primary,
+    borderRadius: R.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  btnDisabled: { opacity: 0.6 },
+  primaryBtnText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  secondaryBtn: {
+    borderRadius: R.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  secondaryBtnText: { color: C.text, fontSize: 16, fontWeight: '600' },
 });

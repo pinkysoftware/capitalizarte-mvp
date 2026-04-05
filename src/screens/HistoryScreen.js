@@ -1,109 +1,94 @@
-import React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  Alert,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../services/api';
-import TransactionItem from '../components/TransactionItem';
+import { C, S, R, CATEGORY_EMOJI } from '../theme';
 
-const COLORS = {
-  background: '#0D0F14',
-  surface: '#141820',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-};
-
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
-    setRefreshing(true);
     try {
       const res = await api.listTx(200);
       setItems(res.transactions || []);
     } catch (e) {
-      Alert.alert('No pudimos cargar el historial', e.message);
-    } finally {
-      setRefreshing(false);
+      Alert.alert('Error', e.message);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [])
-  );
+  useFocusEffect(React.useCallback(() => { load(); }, []));
 
   const confirmDelete = (item) => {
-    Alert.alert('Eliminar movimiento', '¿Seguro quiere eliminar este movimiento?', [
+    Alert.alert('Eliminar', `¿Eliminar ${item.categoria} $${Number(item.monto).toFixed(2)}?`, [
       { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await api.deleteTx(item.id);
-            await load();
-          } catch (e) {
-            Alert.alert('No pudimos eliminar el movimiento', e.message);
-          }
-        },
-      },
+      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+        try { await api.deleteTx(item.id); load(); } catch (e) { Alert.alert('Error', e.message); }
+      }},
     ]);
+  };
+
+  const renderItem = ({ item }) => {
+    const emoji = CATEGORY_EMOJI[item.categoria] || '📦';
+    const isIncome = item.tipo === 'INGRESO';
+    return (
+      <Pressable style={styles.row} onLongPress={() => confirmDelete(item)}>
+        <View style={[styles.icon, isIncome ? styles.iconGreen : styles.iconRed]}>
+          <Text style={styles.emoji}>{emoji}</Text>
+        </View>
+        <View style={styles.info}>
+          <Text style={styles.category}>{item.categoria}</Text>
+          {item.descripcion ? <Text style={styles.desc} numberOfLines={1}>{item.descripcion}</Text> : null}
+          <Text style={styles.date}>{item.fecha}</Text>
+        </View>
+        <Text style={[styles.amount, isIncome ? styles.amountGreen : styles.amountRed]}>
+          {isIncome ? '+' : '-'}${Number(item.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+        </Text>
+      </Pressable>
+    );
   };
 
   return (
     <View style={styles.screen}>
       <FlatList
         data={items}
-        keyExtractor={(item, index) => String(item.id ?? index)}
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} tintColor="#D4A017" />}
-        ListHeaderComponent={
-          <View style={styles.headerCard}>
-            <Text style={styles.eyebrow}>CAPITALIZARTE</Text>
-            <Text style={styles.title}>Historial de movimientos</Text>
-            <Text style={styles.subtitle}>Acá podés revisar todos tus ingresos y gastos, y eliminar los que ya no correspondan.</Text>
-          </View>
-        }
+        keyExtractor={(item, i) => String(item.id ?? i)}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} tintColor={C.primary} />}
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Todavía no hay movimientos</Text>
-            <Text style={styles.emptyText}>Cuando registres ingresos o gastos, los vas a ver acá.</Text>
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Sin transacciones</Text>
           </View>
         }
-        renderItem={({ item }) => <TransactionItem item={item} onDelete={() => confirmDelete(item)} />}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 18, paddingBottom: 32 },
-  headerCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
-    padding: 20,
-    marginBottom: 16,
-  },
-  eyebrow: { color: '#F0C040', fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: 8 },
-  title: { color: COLORS.text, fontSize: 26, fontWeight: '800', marginBottom: 8 },
-  subtitle: { color: COLORS.muted, lineHeight: 20 },
-  emptyCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
-    padding: 18,
-  },
-  emptyTitle: { color: COLORS.text, fontSize: 16, fontWeight: '800', marginBottom: 6 },
-  emptyText: { color: COLORS.muted, lineHeight: 20 },
+  screen: { flex: 1, backgroundColor: C.bg },
+  list: { padding: S.lg, paddingBottom: 100, gap: S.xs },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: S.sm, gap: S.sm },
+  icon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  iconGreen: { backgroundColor: 'rgba(52, 199, 89, 0.12)' },
+  iconRed: { backgroundColor: 'rgba(255, 69, 58, 0.12)' },
+  emoji: { fontSize: 22 },
+  info: { flex: 1 },
+  category: { fontSize: 15, fontWeight: '600', color: C.text },
+  desc: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
+  date: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
+  amount: { fontSize: 15, fontWeight: '700' },
+  amountGreen: { color: C.green },
+  amountRed: { color: C.red },
+  empty: { alignItems: 'center', paddingVertical: S.xxl },
+  emptyText: { color: C.textSecondary, fontSize: 16 },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -32,63 +32,6 @@ const naturalezas = ['FIJO', 'VARIABLE'];
 const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
 const expenseCategories = ['Vivienda', 'Alimentacion', 'Transporte', 'Salud', 'Entretenimiento', 'Deuda', 'Inversion', 'Otro'];
 
-// Hook para Web Speech API
-function useSpeechRecognition() {
-  const [listening, setListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [supported, setSupported] = useState(false);
-  const recognitionRef = useRef(null);
-
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setSupported(true);
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'es-AR';
-
-      recognitionRef.current.onresult = (event) => {
-        let final = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          final += event.results[i][0].transcript;
-        }
-        setTranscript(final);
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        if (event.error !== 'no-speech') {
-          console.log('Speech error:', event.error);
-        }
-        setListening(false);
-      };
-
-      recognitionRef.current.onend = () => setListening(false);
-    }
-  }, []);
-
-  const start = () => {
-    if (recognitionRef.current && !listening) {
-      setTranscript('');
-      try {
-        recognitionRef.current.start();
-        setListening(true);
-      } catch (e) {
-        console.log('Start error:', e);
-      }
-    }
-  };
-
-  const stop = () => {
-    if (recognitionRef.current && listening) {
-      recognitionRef.current.stop();
-      setListening(false);
-    }
-  };
-
-  return { listening, transcript, supported, start, stop };
-}
-
 export default function AddTransactionVoice({ navigation, route }) {
   const tipoInicial = route?.params?.tipo || 'GASTO';
   const [input, setInput] = useState('');
@@ -101,50 +44,16 @@ export default function AddTransactionVoice({ navigation, route }) {
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
-  const { listening, transcript, supported, start, stop } = useSpeechRecognition();
-
-  // Cuando termina de hablar, si hay texto, lo procesamos
-  useEffect(() => {
-    if (transcript && !listening && transcript.length > 2) {
-      setInput(transcript);
-      const result = parseNaturalTransaction(transcript);
-      if (result) {
-        setParsed(result);
-        setTipo(result.tipo);
-        setCategoria(result.categoria);
-        setMonto(result.monto.toString());
-        setDescripcion(result.descripcion);
-      }
-    }
-  }, [listening, transcript]);
-
-  const handleVoicePress = () => {
-    if (listening) {
-      stop();
-    } else {
-      if (!supported) {
-        Alert.alert(
-          'Voz no disponible',
-          'Tu dispositivo no soporta reconocimiento de voz. Escribí naturalmente en el campo de texto.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-      start();
-    }
-  };
-
-  const handleParse = () => {
-    if (!input.trim()) return;
-    const result = parseNaturalTransaction(input);
+  // Procesar texto cada vez que cambia
+  const handleInputChange = (text) => {
+    setInput(text);
+    const result = parseNaturalTransaction(text);
     if (result) {
       setParsed(result);
       setTipo(result.tipo);
       setCategoria(result.categoria);
       setMonto(result.monto.toString());
       setDescripcion(result.descripcion);
-    } else {
-      Alert.alert('No pude entender', 'Probá algo como "cafe $4.50" o "comida 500"');
     }
   };
 
@@ -181,44 +90,28 @@ export default function AddTransactionVoice({ navigation, route }) {
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {/* VOICE INPUT */}
+        {/* INPUT NATURAL */}
         <View style={styles.voiceCard}>
-          <Text style={styles.voiceTitle}>🎤 Hablá o escribí自然的</Text>
-          <Text style={styles.voiceSubtitle}>Ejemplo: "cafe cuatro cincuenta" o "comida quinientos"</Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.voiceInput}
-              placeholder="Escribí o presioná el micrófono..."
-              placeholderTextColor={COLORS.textMuted}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={handleParse}
-              returnKeyType="send"
-              autoCapitalize="none"
-            />
-            <Pressable
-              style={[styles.micButton, listening && styles.micButtonActive]}
-              onPress={handleVoicePress}
-            >
-              {listening ? (
-                <ActivityIndicator color="#111" size="small" />
-              ) : (
-                <Text style={styles.micButtonText}>🎤</Text>
-              )}
-            </Pressable>
-          </View>
-
-          {listening && (
-            <View style={styles.listeningIndicator}>
-              <Text style={styles.listeningText}>🎙️ Escuchando... (hablá en español)</Text>
-            </View>
-          )}
+          <Text style={styles.voiceTitle}>✍️ Escribí o usá el micrófono del teclado</Text>
+          <Text style={styles.voiceSubtitle}>
+            📱 Tocá el campo de abajo y usá el botón del micrófono en tu teclado Android{'\n'}
+            Ejemplo: "cafe $4.50" o "comida 500"
+          </Text>
+          <TextInput
+            style={styles.voiceInput}
+            placeholder="cafe $4.50, comida 500, taxi 200..."
+            placeholderTextColor={COLORS.textMuted}
+            value={input}
+            onChangeText={handleInputChange}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           {parsed && (
             <View style={styles.parsedPreview}>
-              <Text style={styles.parsedTitle}>✓ Detectado:</Text>
+              <Text style={styles.parsedTitle}>✓ Detectado automáticamente:</Text>
               <Text style={styles.parsedText}>{formatTransactionPreview(parsed)}</Text>
-              <Text style={styles.parsedHint}>Editá los campos abajo antes de confirmar</Text>
+              <Text style={styles.parsedHint}>Editá los campos abajo si querés cambiar algo</Text>
             </View>
           )}
         </View>
@@ -318,15 +211,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: 18, paddingBottom: 48, gap: 14 },
   voiceCard: { backgroundColor: COLORS.surface, borderRadius: 20, padding: 18, borderWidth: 1, borderColor: COLORS.border, gap: 10 },
-  voiceTitle: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
-  voiceSubtitle: { color: COLORS.textMuted, fontSize: 13 },
-  inputRow: { flexDirection: 'row', gap: 10 },
-  voiceInput: { flex: 1, backgroundColor: COLORS.surfaceSoft, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, fontSize: 16, borderWidth: 1, borderColor: COLORS.border },
-  micButton: { backgroundColor: COLORS.primary, borderRadius: 14, width: 48, alignItems: 'center', justifyContent: 'center' },
-  micButtonActive: { backgroundColor: COLORS.red },
-  micButtonText: { fontSize: 20 },
-  listeningIndicator: { backgroundColor: 'rgba(211, 47, 47, 0.15)', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
-  listeningText: { color: COLORS.red, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  voiceTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  voiceSubtitle: { color: COLORS.textMuted, fontSize: 13, lineHeight: 19 },
+  voiceInput: { backgroundColor: COLORS.surfaceSoft, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, color: COLORS.text, fontSize: 17, borderWidth: 1, borderColor: COLORS.border },
   parsedPreview: { backgroundColor: 'rgba(46, 204, 64, 0.12)', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: COLORS.green },
   parsedTitle: { color: COLORS.green, fontSize: 12, fontWeight: '800', marginBottom: 4 },
   parsedText: { color: COLORS.text, fontSize: 15, fontWeight: '700' },

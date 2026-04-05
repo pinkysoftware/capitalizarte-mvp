@@ -1,5 +1,5 @@
-import React, { useTheme } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,8 +17,7 @@ import Avatar from '../components/Avatar';
 import TransactionItem from '../components/TransactionItem';
 import { getStoredProfilePhoto } from '../services/profileMedia';
 
-const { colors } = useTheme();
-const COLORS = colors || {
+const COLORS = {
   background: '#0D0F14',
   surface: '#141820',
   surfaceSoft: '#1A1F2B',
@@ -42,16 +41,20 @@ function MoneyCard({ label, value, accent, onPress, hint }) {
   return onPress ? <Pressable onPress={onPress}>{content}</Pressable> : content;
 }
 
-function BottomMenu({ onIncome, onExpense, onProfile, onLogout }) {
+function BottomMenu({ onIncome, onExpense, onProfile, onLogout, onVoice, onChat, onBudget }) {
   return (
     <View style={styles.bottomMenu}>
-      <Pressable style={styles.menuItem} onPress={onIncome}>
-        <Text style={styles.menuIcon}>＋</Text>
-        <Text style={styles.menuText}>Ingreso</Text>
+      <Pressable style={styles.menuItem} onPress={onVoice}>
+        <Text style={styles.menuIcon}>🎤</Text>
+        <Text style={styles.menuText}>Voz</Text>
       </Pressable>
-      <Pressable style={styles.menuItem} onPress={onExpense}>
-        <Text style={styles.menuIcon}>－</Text>
-        <Text style={styles.menuText}>Gasto</Text>
+      <Pressable style={styles.menuItem} onPress={onChat}>
+        <Text style={styles.menuIcon}>🤖</Text>
+        <Text style={styles.menuText}>AI</Text>
+      </Pressable>
+      <Pressable style={styles.menuItem} onPress={onBudget}>
+        <Text style={styles.menuIcon}>📊</Text>
+        <Text style={styles.menuText}>Presup.</Text>
       </Pressable>
       <Pressable style={styles.menuItem} onPress={onProfile}>
         <Text style={styles.menuIcon}>◉</Text>
@@ -236,6 +239,9 @@ export default function DashboardScreen({ navigation }) {
         onExpense={() => navigation.navigate('AddTransaction', { tipo: 'GASTO' })}
         onProfile={() => navigation.navigate('Profile')}
         onLogout={logout}
+        onVoice={() => navigation.navigate('AddTransactionVoice')}
+        onChat={() => navigation.navigate('Chat')}
+        onBudget={() => navigation.navigate('Budget')}
       />
     </View>
   );

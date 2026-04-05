@@ -5,11 +5,14 @@ import LoginScreen from '../screens/LoginScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import AddTransactionScreen from '../screens/AddTransactionScreen';
+import AddTransactionVoice from '../screens/AddTransactionVoice';
 import LifeScreen from '../screens/LifeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SavingsScreen from '../screens/SavingsScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
+import ChatScreen from '../screens/ChatScreen';
+import BudgetScreen from '../screens/BudgetScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +35,9 @@ export default function AppNavigator({ initialRouteName = 'Register' }) {
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Tu perfil' }} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ title: 'Nuevo movimiento' }} />
+      <Stack.Screen name="AddTransactionVoice" component={AddTransactionVoice} options={{ title: 'Registro rápido' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Asistente AI' }} />
+      <Stack.Screen name="Budget" component={BudgetScreen} options={{ title: 'Presupuestos' }} />
       <Stack.Screen name="Life" component={LifeScreen} options={{ title: 'Saldo actual' }} />
       <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'Historial' }} />
       <Stack.Screen name="Savings" component={SavingsScreen} options={{ title: 'Ahorros' }} />

@@ -1,5 +1,5 @@
-import React, { useTheme } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';, { useState } from 'react';
+import React from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -17,8 +17,7 @@ import {
 import { api, setToken } from '../services/api';
 import { isNonNegativeNumber, isValidEmail } from '../services/validators';
 
-const { colors } = useTheme();
-const COLORS = colors || {
+const COLORS = {
   background: '#0D0F14',
   surface: '#141820',
   surfaceSoft: '#1A1F2B',

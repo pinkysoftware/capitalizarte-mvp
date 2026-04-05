@@ -1,11 +1,10 @@
-import React, { useTheme } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
 import { loadSavings, saveSavings } from '../services/savingsStorage';
 
-const { colors } = useTheme();
-const COLORS = colors || {
+const COLORS = {
   background: '#0D0F14',
   surface: '#141820',
   surfaceSoft: '#1A1F2B',

@@ -1,12 +1,11 @@
-import React, { useTheme } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../services/api';
 import TransactionItem from '../components/TransactionItem';
 
-const { colors } = useTheme();
-const COLORS = colors || {
+const COLORS = {
   background: '#0D0F14',
   surface: '#141820',
   text: '#E8E8E8',

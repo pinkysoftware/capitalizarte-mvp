@@ -1,10 +1,9 @@
-import React, { useTheme } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';, { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Alert, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
 import { api } from '../services/api';
 
-const { colors } = useTheme();
-const COLORS = colors || {
+const COLORS = {
   background: '#0D0F14', surface: '#141820', surfaceSoft: '#1A1F2B', primary: '#D4A017', primaryBright: '#F0C040', text: '#E8E8E8', textMuted: '#9A9FAA', border: 'rgba(212, 160, 23, 0.22)',
 };
 

@@ -39,7 +39,10 @@ export default function LifeScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [profileRes, dashRes] = await Promise.all([api.getProfile(), api.getDashboard()]);
+        const [profileRes, dashRes] = await Promise.all([
+        api.getProfile().catch(() => null),
+        api.getDashboard().catch(() => null)
+      ]);
         setProfile(profileRes.user || profileRes);
         setDashboard(dashRes);
       } catch (e) {

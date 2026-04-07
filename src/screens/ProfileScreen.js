@@ -35,8 +35,8 @@ export default function ProfileScreen({ navigation }) {
 
   const load = async () => {
     try {
-      const res = await api.getProfile();
-      const u = res.user || res;
+      const res = await api.getProfile().catch(e => ({ user: null }));
+      const u = (res?.user || res) || {};
       setForm({
         email: u.email || '',
         nombre: u.nombre || '',

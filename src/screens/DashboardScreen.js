@@ -69,7 +69,10 @@ export default function DashboardScreen({ navigation }) {
 
   const load = async () => {
     try {
-      const [dashRes, profileRes] = await Promise.all([api.getDashboard(), api.getProfile()]);
+      const [dashRes, profileRes] = await Promise.all([
+        api.getDashboard().catch(e => ({ saldo: 0, ingresos: 0, gastos: 0, salud_financiera: 0, ultimas_transacciones: [] })),
+        api.getProfile().catch(e => ({ user: null }))
+      ]);
       setData(dashRes);
       setProfile(profileRes.user || profileRes);
     } catch (e) {
@@ -94,7 +97,7 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const name = profile?.apodo || profile?.nombre || 'Capitalizador';
-  const txs = data?.ultimas_transacciones || [];
+  const txs = Array.isArray(data?.ultimas_transacciones) ? data.ultimas_transacciones : [];
   const health = data?.salud_financiera || 0;
 
   return (

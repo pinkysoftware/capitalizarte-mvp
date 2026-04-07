@@ -18,7 +18,8 @@ const expenseCategories = ['Alimentacion', 'Transporte', 'Vivienda', 'Salud', 'E
 const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
 
 export default function AddTransactionVoice({ navigation, route }) {
-  const tipoInicial = route?.params?.tipo || 'GASTO';
+  const rawTipo = route?.params?.tipo;
+  const tipoInicial = (rawTipo && String(rawTipo).length > 0) ? String(rawTipo) : 'GASTO';
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState(null);
   const [loading, setLoading] = useState(false);

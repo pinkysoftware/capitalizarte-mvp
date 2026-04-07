@@ -18,7 +18,8 @@ const expenseCategories = ['Alimentacion', 'Transporte', 'Vivienda', 'Salud', 'E
 const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
 
 export default function AddTransactionScreen({ navigation, route }) {
-  const tipoInicial = route?.params?.tipo || 'GASTO';
+  const rawTipo = route?.params?.tipo;
+  const tipoInicial = (rawTipo && String(rawTipo).length > 0) ? String(rawTipo) : 'GASTO';
   const [tipo, setTipo] = useState(tipoInicial);
   const [naturaleza, setNaturaleza] = useState('VARIABLE');
   const [categoria, setCategoria] = useState('');

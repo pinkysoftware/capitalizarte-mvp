@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# Redirigir /api/login → /api/login.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([a-zA-Z0-9_-]+)$ api/$1.php [L,QSA]
+
+# Redirigir /api/transactions/{id} → /api/transactions.php?id={id}
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/transactions/([0-9]+)$ api/transactions.php?id=$1 [L,QSA]
+
+# CORS headers
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Options
+Options -Indexes
+Options +FollowSymLinks

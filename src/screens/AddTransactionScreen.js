@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
 
@@ -52,139 +53,186 @@ export default function AddTransactionScreen({ navigation, route }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-
-        {/* Tipo */}
-        <View style={styles.toggleRow}>
-          {tipos.map(t => (
-            <Pressable
-              key={t}
-              style={[styles.toggleBtn, tipo === t && (t === 'INGRESO' ? styles.toggleGreen : styles.toggleRed)]}
-              onPress={() => { setTipo(t); setCategoria(''); }}
-            >
-              <Text style={[styles.toggleText, tipo === t && styles.toggleTextActive]}>
-                {t === 'INGRESO' ? '💰 Ingreso' : '💸 Gasto'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Monto */}
-        <View style={styles.montoWrap}>
-          <Text style={styles.montoSymbol}>$</Text>
-          <TextInput
-            style={styles.montoInput}
-            placeholder="0.00"
-            placeholderTextColor={C.textTertiary}
-            value={monto}
-            onChangeText={setMonto}
-            keyboardType="decimal-pad"
-            autoFocus
-          />
-        </View>
-
-        {/* Descripción */}
-        <TextInput
-          style={styles.input}
-          placeholder="Descripción (opcional)"
-          placeholderTextColor={C.textTertiary}
-          value={descripcion}
-          onChangeText={setDescripcion}
-        />
-
-        {/* Categorías */}
-        <View style={styles.categoriesWrap}>
-          {categories.map(cat => (
-            <Pressable
-              key={cat}
-              style={[styles.catChip, categoria === cat && styles.catChipActive]}
-              onPress={() => setCategoria(cat)}
-            >
-              <Text style={styles.catEmoji}>{CATEGORY_EMOJI[cat] || '📦'}</Text>
-              <Text style={[styles.catText, categoria === cat && styles.catTextActive]}>{cat}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Naturaleza */}
-        <View style={styles.natRow}>
-          {naturalezas.map(n => (
-            <Pressable
-              key={n}
-              style={[styles.natBtn, naturaleza === n && styles.natBtnActive]}
-              onPress={() => setNaturaleza(n)}
-            >
-              <Text style={[styles.natText, naturaleza === n && styles.natTextActive]}>{n}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Submit */}
-        <Pressable
-          style={[styles.submitBtn, (!monto || !categoria || loading) && styles.submitBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={!monto || !categoria || loading}
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.submitBtnText}>Confirmar</Text>
-        </Pressable>
+          {/* Tipo */}
+          <View style={styles.toggleRow}>
+            {tipos.map(t => (
+              <Pressable
+                key={t}
+                style={[styles.toggleBtn, tipo === t && (t === 'INGRESO' ? styles.toggleGreen : styles.toggleRed)]}
+                onPress={() => { setTipo(t); setCategoria(''); }}
+              >
+                <Text style={[styles.toggleText, tipo === t && styles.toggleTextActive]}>
+                  {t === 'INGRESO' ? '↑ Ingreso' : '↓ Gasto'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Monto */}
+          <View style={styles.montoWrap}>
+            <Text style={styles.montoSymbol}>$</Text>
+            <TextInput
+              style={styles.montoInput}
+              placeholder="0"
+              placeholderTextColor={C.textTertiary}
+              value={monto}
+              onChangeText={setMonto}
+              keyboardType="decimal-pad"
+              autoFocus
+            />
+          </View>
+
+          {/* Descripción */}
+          <TextInput
+            style={styles.input}
+            placeholder="Descripción (opcional)"
+            placeholderTextColor={C.textTertiary}
+            value={descripcion}
+            onChangeText={setDescripcion}
+          />
+
+          {/* Categorías */}
+          <View style={styles.categoriesWrap}>
+            {categories.map(cat => (
+              <Pressable
+                key={cat}
+                style={[styles.catChip, categoria === cat && styles.catChipActive]}
+                onPress={() => setCategoria(cat)}
+              >
+                <Text style={styles.catEmoji}>{CATEGORY_EMOJI[cat] || '📦'}</Text>
+                <Text style={[styles.catText, categoria === cat && styles.catTextActive]}>{cat}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Naturaleza */}
+          <View style={styles.natRow}>
+            {naturalezas.map(n => (
+              <Pressable
+                key={n}
+                style={[styles.natBtn, naturaleza === n && styles.natBtnActive]}
+                onPress={() => setNaturaleza(n)}
+              >
+                <Text style={[styles.natText, naturaleza === n && styles.natTextActive]}>{n}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Submit */}
+          <Pressable
+            style={[styles.submitBtn, (!monto || !categoria || loading) && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={!monto || !categoria || loading}
+          >
+            <Text style={styles.submitBtnText}>Confirmar</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
+  safe: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: S.lg, gap: S.lg },
-  
+  content: {
+    padding: S.md,
+    gap: S.md,
+  },
+
+  // Toggle
   toggleRow: { flexDirection: 'row', gap: S.sm },
-  toggleBtn: { flex: 1, paddingVertical: 14, borderRadius: R.md, alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.border },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: R.md,
+    alignItems: 'center',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   toggleGreen: { backgroundColor: C.green, borderColor: C.green },
   toggleRed: { backgroundColor: C.red, borderColor: C.red },
-  toggleText: { fontWeight: '700', fontSize: 15, color: C.textSecondary },
+  toggleText: { fontWeight: '700', fontSize: 14, color: C.textSecondary },
   toggleTextActive: { color: '#fff' },
-  
+
+  // Monto
   montoWrap: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
-  montoSymbol: { fontSize: 36, fontWeight: '800', color: C.text },
-  montoInput: { flex: 1, fontSize: 36, fontWeight: '800', color: C.text, padding: 0 },
-  
+  montoSymbol: { fontSize: 32, fontWeight: '800', color: C.text },
+  montoInput: {
+    flex: 1,
+    fontSize: 32,
+    fontWeight: '800',
+    color: C.text,
+    padding: 0,
+  },
+
+  // Input
   input: {
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: R.md,
     paddingHorizontal: S.md,
-    paddingVertical: 16,
+    paddingVertical: 12,
     color: C.text,
-    fontSize: 16,
+    fontSize: 15,
   },
-  
-  categoriesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
+
+  // Categorías
+  categoriesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: S.xs },
   catChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: S.md,
-    paddingVertical: 10,
+    gap: 4,
+    paddingHorizontal: S.sm,
+    paddingVertical: 8,
     borderRadius: R.full,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.border,
   },
   catChipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  catEmoji: { fontSize: 16 },
-  catText: { fontSize: 14, fontWeight: '600', color: C.textSecondary },
+  catEmoji: { fontSize: 14 },
+  catText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
   catTextActive: { color: '#000' },
-  
+
+  // Naturaleza
   natRow: { flexDirection: 'row', gap: S.sm },
-  natBtn: { flex: 1, paddingVertical: 12, borderRadius: R.md, alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.border },
+  natBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: R.md,
+    alignItems: 'center',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   natBtnActive: { backgroundColor: C.primary, borderColor: C.primary },
-  natText: { fontWeight: '700', fontSize: 14, color: C.textSecondary },
+  natText: { fontWeight: '700', fontSize: 13, color: C.textSecondary },
   natTextActive: { color: '#000' },
-  
-  submitBtn: { backgroundColor: C.primary, borderRadius: R.md, paddingVertical: 16, alignItems: 'center', marginTop: S.sm },
+
+  // Submit
+  submitBtn: {
+    backgroundColor: C.primary,
+    borderRadius: R.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: S.sm,
+  },
   submitBtnDisabled: { opacity: 0.4 },
-  submitBtnText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  submitBtnText: { color: '#000', fontSize: 15, fontWeight: '700' },
 });

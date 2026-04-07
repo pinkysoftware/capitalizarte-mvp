@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
 import { parseNaturalTransaction, formatTransactionPreview } from '../services/naturalLanguageParser';
@@ -66,106 +67,125 @@ export default function AddTransactionVoice({ navigation, route }) {
   const categories = tipo === 'INGRESO' ? incomeCategories : expenseCategories;
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-
-        {/* Input principal */}
-        <View style={styles.inputCard}>
-          <Text style={styles.inputLabel}>✍️ Escribí o dictá tu gasto</Text>
-          <TextInput
-            style={styles.mainInput}
-            placeholder='Ej: "cafe $4.50" o "comida 500"'
-            placeholderTextColor={C.textTertiary}
-            value={input}
-            onChangeText={handleChange}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {parsed && (
-            <View style={styles.preview}>
-              <Text style={styles.previewText}>{formatTransactionPreview(parsed)}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Tipo */}
-        <View style={styles.toggleRow}>
-          {tipos.map(t => (
-            <Pressable
-              key={t}
-              style={[styles.toggleBtn, tipo === t && (t === 'INGRESO' ? styles.toggleGreen : styles.toggleRed)]}
-              onPress={() => { setTipo(t); setCategoria(''); }}
-            >
-              <Text style={[styles.toggleText, tipo === t && styles.toggleTextActive]}>
-                {t === 'INGRESO' ? '💰' : '💸'} {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Monto */}
-        <View style={styles.montoRow}>
-          <Text style={styles.montoSymbol}>$</Text>
-          <TextInput
-            style={styles.montoInput}
-            placeholder="0.00"
-            placeholderTextColor={C.textTertiary}
-            value={monto}
-            onChangeText={setMonto}
-            keyboardType="decimal-pad"
-          />
-        </View>
-
-        {/* Categorías */}
-        <View style={styles.categoriesWrap}>
-          {categories.map(cat => (
-            <Pressable
-              key={cat}
-              style={[styles.catChip, categoria === cat && styles.catChipActive]}
-              onPress={() => setCategoria(cat)}
-            >
-              <Text style={styles.catEmoji}>{CATEGORY_EMOJI[cat] || '📦'}</Text>
-              <Text style={[styles.catText, categoria === cat && styles.catTextActive]}>{cat}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Descripción */}
-        <TextInput
-          style={styles.input}
-          placeholder="Descripción (opcional)"
-          placeholderTextColor={C.textTertiary}
-          value={descripcion}
-          onChangeText={setDescripcion}
-        />
-
-        {/* Submit */}
-        <Pressable
-          style={[styles.submitBtn, (!monto || !categoria || loading) && styles.submitBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={!monto || !categoria || loading}
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.submitBtnText}>Confirmar</Text>
-        </Pressable>
+          {/* Input principal */}
+          <View style={styles.inputCard}>
+            <Text style={styles.inputLabel}>Escribí o dictá tu movimiento</Text>
+            <TextInput
+              style={styles.mainInput}
+              placeholder='"cafe $4.50" o "comida 500"'
+              placeholderTextColor={C.textTertiary}
+              value={input}
+              onChangeText={handleChange}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {parsed && (
+              <View style={styles.preview}>
+                <Text style={styles.previewText}>{formatTransactionPreview(parsed)}</Text>
+              </View>
+            )}
+          </View>
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Tipo */}
+          <View style={styles.toggleRow}>
+            {tipos.map(t => (
+              <Pressable
+                key={t}
+                style={[styles.toggleBtn, tipo === t && (t === 'INGRESO' ? styles.toggleGreen : styles.toggleRed)]}
+                onPress={() => { setTipo(t); setCategoria(''); }}
+              >
+                <Text style={[styles.toggleText, tipo === t && styles.toggleTextActive]}>
+                  {t === 'INGRESO' ? '↑ Ingreso' : '↓ Gasto'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Monto */}
+          <View style={styles.montoRow}>
+            <Text style={styles.montoSymbol}>$</Text>
+            <TextInput
+              style={styles.montoInput}
+              placeholder="0"
+              placeholderTextColor={C.textTertiary}
+              value={monto}
+              onChangeText={setMonto}
+              keyboardType="decimal-pad"
+            />
+          </View>
+
+          {/* Categorías */}
+          <View style={styles.categoriesWrap}>
+            {categories.map(cat => (
+              <Pressable
+                key={cat}
+                style={[styles.catChip, categoria === cat && styles.catChipActive]}
+                onPress={() => setCategoria(cat)}
+              >
+                <Text style={styles.catEmoji}>{CATEGORY_EMOJI[cat] || '📦'}</Text>
+                <Text style={[styles.catText, categoria === cat && styles.catTextActive]}>{cat}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Descripción */}
+          <TextInput
+            style={styles.input}
+            placeholder="Descripción (opcional)"
+            placeholderTextColor={C.textTertiary}
+            value={descripcion}
+            onChangeText={setDescripcion}
+          />
+
+          {/* Submit */}
+          <Pressable
+            style={[styles.submitBtn, (!monto || !categoria || loading) && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={!monto || !categoria || loading}
+          >
+            <Text style={styles.submitBtnText}>Confirmar</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
+  safe: { flex: 1, backgroundColor: C.bg },
+  container: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: S.lg, gap: S.lg },
-  inputCard: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.sm },
-  inputLabel: { fontSize: 16, fontWeight: '700', color: C.text },
+  content: {
+    padding: S.md,
+    gap: S.md,
+  },
+
+  inputCard: {
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.md,
+    gap: S.sm,
+  },
+  inputLabel: { fontSize: 14, fontWeight: '700', color: C.text },
   mainInput: {
     backgroundColor: C.bg,
     borderRadius: R.md,
     paddingHorizontal: S.md,
-    paddingVertical: 16,
+    paddingVertical: 12,
     color: C.text,
-    fontSize: 18,
+    fontSize: 16,
     borderWidth: 1,
     borderColor: C.border,
   },
@@ -176,24 +196,61 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: C.green,
   },
-  previewText: { color: C.text, fontSize: 15, fontWeight: '600' },
+  previewText: { color: C.text, fontSize: 14, fontWeight: '600' },
+
   toggleRow: { flexDirection: 'row', gap: S.sm },
-  toggleBtn: { flex: 1, paddingVertical: 14, borderRadius: R.md, alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.border },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: R.md,
+    alignItems: 'center',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   toggleGreen: { backgroundColor: C.green, borderColor: C.green },
   toggleRed: { backgroundColor: C.red, borderColor: C.red },
   toggleText: { fontWeight: '700', fontSize: 14, color: C.textSecondary },
   toggleTextActive: { color: '#fff' },
+
   montoRow: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
-  montoSymbol: { fontSize: 32, fontWeight: '800', color: C.text },
-  montoInput: { flex: 1, fontSize: 32, fontWeight: '800', color: C.text, padding: 0 },
-  categoriesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
-  catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: S.md, paddingVertical: 10, borderRadius: R.full, backgroundColor: C.surface, borderWidth: 1, borderColor: C.border },
+  montoSymbol: { fontSize: 28, fontWeight: '800', color: C.text },
+  montoInput: { flex: 1, fontSize: 28, fontWeight: '800', color: C.text, padding: 0 },
+
+  categoriesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: S.xs },
+  catChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: S.sm,
+    paddingVertical: 8,
+    borderRadius: R.full,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   catChipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  catEmoji: { fontSize: 16 },
-  catText: { fontSize: 14, fontWeight: '600', color: C.textSecondary },
+  catEmoji: { fontSize: 14 },
+  catText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
   catTextActive: { color: '#000' },
-  input: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingHorizontal: S.md, paddingVertical: 16, color: C.text, fontSize: 16 },
-  submitBtn: { backgroundColor: C.primary, borderRadius: R.md, paddingVertical: 16, alignItems: 'center' },
+
+  input: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: R.md,
+    paddingHorizontal: S.md,
+    paddingVertical: 12,
+    color: C.text,
+    fontSize: 15,
+  },
+
+  submitBtn: {
+    backgroundColor: C.primary,
+    borderRadius: R.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
   submitBtnDisabled: { opacity: 0.4 },
-  submitBtnText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  submitBtnText: { color: '#000', fontSize: 15, fontWeight: '700' },
 });

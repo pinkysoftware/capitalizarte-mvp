@@ -3,18 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
 import { loadSavings, saveSavings } from '../services/savingsStorage';
-
-const COLORS = {
-  background: '#0D0F14',
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-  primary: '#D4A017',
-  green: '#2ECC40',
-  red: '#E53935',
-};
+import { C, S, R } from '../theme';
 
 const TYPES = ['efectivo', 'caja_ahorro', 'usd', 'fondo_emergencia', 'otro'];
 
@@ -92,7 +81,7 @@ export default function SavingsScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Nuevo ahorro</Text>
-        <TextInput value={nombre} onChangeText={setNombre} placeholder="Nombre" placeholderTextColor={COLORS.muted} style={styles.input} />
+        <TextInput value={nombre} onChangeText={setNombre} placeholder="Nombre" placeholderTextColor={C.textTertiary} style={styles.input} />
         <View style={styles.chipsRow}>
           {TYPES.map((item) => {
             const active = tipo === item;
@@ -103,8 +92,8 @@ export default function SavingsScreen() {
             );
           })}
         </View>
-        <TextInput value={moneda} onChangeText={setMoneda} placeholder="Moneda" placeholderTextColor={COLORS.muted} style={styles.input} />
-        <TextInput value={monto} onChangeText={setMonto} placeholder="Monto" placeholderTextColor={COLORS.muted} keyboardType="numeric" style={styles.input} />
+        <TextInput value={moneda} onChangeText={setMoneda} placeholder="Moneda" placeholderTextColor={C.textTertiary} style={styles.input} />
+        <TextInput value={monto} onChangeText={setMonto} placeholder="Monto" placeholderTextColor={C.textTertiary} keyboardType="numeric" style={styles.input} />
         <Pressable style={[styles.primaryButton, saving && { opacity: 0.7 }]} onPress={addSaving} disabled={saving}>
           {saving ? <ActivityIndicator color="#111111" /> : <Text style={styles.primaryButtonText}>Agregar ahorro</Text>}
         </Pressable>
@@ -130,27 +119,27 @@ export default function SavingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 20, paddingBottom: 36, gap: 16 },
-  heroCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 24, padding: 22 },
-  eyebrow: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: 8 },
-  title: { color: COLORS.text, fontSize: 28, fontWeight: '800', marginBottom: 8 },
-  subtitle: { color: COLORS.muted, lineHeight: 21 },
-  card: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 18, gap: 12 },
-  cardTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
-  cardText: { color: COLORS.muted, lineHeight: 20 },
-  totalValue: { color: COLORS.primary, fontSize: 30, fontWeight: '800' },
-  input: { backgroundColor: COLORS.surfaceSoft, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text },
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { padding: S.lg, paddingBottom: 100, gap: S.md },
+  heroCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.xl, padding: S.lg },
+  eyebrow: { color: C.primary, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: S.sm },
+  title: { color: C.text, fontSize: 28, fontWeight: '800', marginBottom: S.sm },
+  subtitle: { color: C.textSecondary, lineHeight: 21 },
+  card: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.lg, padding: S.lg, gap: S.md },
+  cardTitle: { color: C.text, fontSize: 18, fontWeight: '800' },
+  cardText: { color: C.textSecondary, lineHeight: 20 },
+  totalValue: { color: C.primary, fontSize: 30, fontWeight: '800' },
+  input: { backgroundColor: C.surfaceHover, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingHorizontal: S.md, paddingVertical: 13, color: C.text },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, backgroundColor: COLORS.surfaceSoft, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  chipActive: { backgroundColor: 'rgba(212, 160, 23, 0.16)', borderColor: COLORS.primary },
-  chipText: { color: COLORS.muted, fontWeight: '600' },
-  chipTextActive: { color: COLORS.primary },
-  primaryButton: { backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  chip: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, backgroundColor: C.surfaceHover, borderWidth: 1, borderColor: C.border },
+  chipActive: { backgroundColor: C.primaryDim, borderColor: C.primary },
+  chipText: { color: C.textSecondary, fontWeight: '600' },
+  chipTextActive: { color: C.primary },
+  primaryButton: { backgroundColor: C.primary, borderRadius: R.md, paddingVertical: S.md, alignItems: 'center' },
   primaryButtonText: { color: '#111111', fontWeight: '800' },
-  itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.surfaceSoft, borderRadius: 14, padding: 12 },
-  itemName: { color: COLORS.text, fontWeight: '700' },
-  itemMeta: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
-  itemAmount: { color: COLORS.green, fontWeight: '800' },
-  removeText: { color: COLORS.red, fontWeight: '700' },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.surfaceHover, borderRadius: R.md, padding: S.md },
+  itemName: { color: C.text, fontWeight: '700' },
+  itemMeta: { color: C.textSecondary, fontSize: 12, marginTop: 2 },
+  itemAmount: { color: C.green, fontWeight: '800' },
+  removeText: { color: C.red, fontWeight: '700' },
 });

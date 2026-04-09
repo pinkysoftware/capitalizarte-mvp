@@ -1,14 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
-
-const COLORS = {
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  primary: '#D4A017',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-};
+import { C, R } from '../theme';
 
 const AVATARS = { '1': '🧑‍💼', '2': '🧑‍🎓', '3': '🧑‍🚀', '4': '🧑‍🔧', '5': '🧑‍💻' };
 
@@ -31,23 +23,23 @@ export default function Avatar({ avatarId = '1', apodo = 'Capitalizador', photoU
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 20,
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
     padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: C.border,
   },
   badge: {
     width: 82,
     height: 82,
     borderRadius: 41,
-    backgroundColor: COLORS.surfaceSoft,
+    backgroundColor: C.surfaceHover,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: C.border,
     overflow: 'hidden',
   },
   photo: {
@@ -58,13 +50,13 @@ const styles = StyleSheet.create({
     fontSize: 42,
   },
   name: {
-    color: COLORS.text,
+    color: C.text,
     fontSize: 18,
     fontWeight: '800',
   },
   sub: {
     marginTop: 4,
-    color: COLORS.muted,
+    color: C.textSecondary,
     fontSize: 13,
   },
 });

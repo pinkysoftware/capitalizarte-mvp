@@ -118,11 +118,16 @@ export async function setToken(token) {
 
 /**
  * Obtiene el token guardado anteriormente
- * 
- * @returns {string|null} - El token o null si no hay ninguno guardado
+ *
+ * @returns {Promise<string|null} - El token o null si no hay ninguno guardado
  */
-export function getToken() {
-  return AsyncStorage.getItem(TOKEN_KEY);
+export async function getToken() {
+  try {
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    return token && token.length > 0 ? token : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -262,11 +267,52 @@ export const api = {
 
   /**
    * Obtiene el resumen financiero (totales de ingresos, gastos, balance)
-   * 
+   *
    * GET /dashboard
    * Response: { balance_total, total_ingresos, total_gastos, ... }
    */
   async getDashboard() {
     return await fetchApi('/dashboard');
+  },
+
+  /**
+   * Solicita el envío de un email de recuperación de contraseña
+   *
+   * POST /forgot-password
+   * Body: { email }
+   * Response: { message: 'recovery_email_sent' }
+   */
+  async requestPasswordReset({ email }) {
+    return await fetchApi('/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  /**
+   * Restablece la contraseña usando un token recibido por email
+   *
+   * POST /reset-password
+   * Body: { token, password }
+   * Response: { message: 'password_updated' }
+   */
+  async resetPassword({ token, password }) {
+    return await fetchApi('/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  },
+
+  /**
+   * Actualiza los datos del perfil del usuario
+   *
+   * PUT /profile
+   * Body: { nombre, apodo, ciudad, pais, ocupacion, ingreso_mensual, gastos_fijos, gastos_variables, nivel_inversor }
+   */
+  async updateProfile(data) {
+    return await fetchApi('/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 };

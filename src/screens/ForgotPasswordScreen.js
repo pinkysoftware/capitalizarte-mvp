@@ -14,17 +14,7 @@ import {
 } from 'react-native';
 import { api } from '../services/api';
 import { isValidEmail } from '../services/validators';
-
-const COLORS = {
-  background: '#0D0F14',
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  primary: '#D4A017',
-  primaryBright: '#F0C040',
-  text: '#E8E8E8',
-  textMuted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-};
+import { C, S, R } from '../theme';
 
 function Field({ label, value, onChangeText, placeholder, keyboardType = 'default' }) {
   return (
@@ -32,7 +22,7 @@ function Field({ label, value, onChangeText, placeholder, keyboardType = 'defaul
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={C.textTertiary}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -55,7 +45,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     setLoading(true);
     try {
-      const res = api.requestPasswordReset ? await api.requestPasswordReset({ email: safeEmail }) : null;
+      const res = await api.requestPasswordReset({ email: safeEmail });
       if (res?.ok === false) {
         Alert.alert('Correo no registrado', 'Este correo no está registrado en la app.');
       } else if (res?.message === 'recovery_email_sent') {
@@ -97,17 +87,17 @@ export default function ForgotPasswordScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 20, paddingBottom: 48, gap: 16 },
-  heroCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 24, padding: 22, alignItems: 'center' },
-  eyebrow: { color: COLORS.primaryBright, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: 10, textAlign: 'center' },
-  title: { color: COLORS.text, fontSize: 28, lineHeight: 34, fontWeight: '800', marginBottom: 10, textAlign: 'center' },
-  subtitle: { color: COLORS.textMuted, fontSize: 15, lineHeight: 22, textAlign: 'center' },
-  sectionCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 18, gap: 14 },
-  sectionTitle: { color: COLORS.primary, fontSize: 18, fontWeight: '700' },
-  fieldWrap: { gap: 8 },
-  fieldLabel: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
-  input: { backgroundColor: COLORS.surfaceSoft, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text, fontSize: 15 },
-  primaryButton: { marginTop: 6, backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { padding: S.lg, paddingBottom: S.xxl, gap: S.md },
+  heroCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.xl, padding: S.lg, alignItems: 'center' },
+  eyebrow: { color: C.primaryLight, fontSize: 12, fontWeight: '800', letterSpacing: 1.4, marginBottom: S.sm, textAlign: 'center' },
+  title: { color: C.text, fontSize: 28, lineHeight: 34, fontWeight: '800', marginBottom: S.sm, textAlign: 'center' },
+  subtitle: { color: C.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },
+  sectionCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.lg, padding: S.lg, gap: S.md },
+  sectionTitle: { color: C.primary, fontSize: 18, fontWeight: '700' },
+  fieldWrap: { gap: S.sm },
+  fieldLabel: { color: C.text, fontSize: 14, fontWeight: '600' },
+  input: { backgroundColor: C.surfaceHover, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingHorizontal: S.md, paddingVertical: 13, color: C.text, fontSize: 15 },
+  primaryButton: { marginTop: S.sm, backgroundColor: C.primary, borderRadius: R.md, paddingVertical: S.md, alignItems: 'center' },
   primaryButtonText: { color: '#111111', fontSize: 16, fontWeight: '800' },
 });

@@ -1,18 +1,10 @@
 import React, { useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, PanResponder, Pressable } from 'react-native';
-
-const COLORS = {
-  surface: '#141820',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  green: '#2ECC40',
-  red: '#E53935',
-  border: 'rgba(255,255,255,0.06)',
-};
+import { C, S, R } from '../theme';
 
 export default function TransactionItem({ item, onDelete }) {
   const isIn = item.tipo === 'INGRESO';
-  const color = isIn ? COLORS.green : COLORS.red;
+  const color = isIn ? C.green : C.red;
   const sign = isIn ? '+ ' : '- ';
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -59,16 +51,16 @@ export default function TransactionItem({ item, onDelete }) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: 10,
-    borderRadius: 16,
+    marginBottom: S.sm,
+    borderRadius: R.md,
     overflow: 'hidden',
   },
   deleteActionWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'flex-end',
     justifyContent: 'center',
-    backgroundColor: COLORS.red,
-    borderRadius: 16,
+    backgroundColor: C.red,
+    borderRadius: R.md,
   },
   deleteAction: {
     width: 92,
@@ -82,11 +74,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 14,
+    backgroundColor: C.surface,
+    borderRadius: R.md,
+    padding: S.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: C.border,
   },
   row: {
     flexDirection: 'row',
@@ -95,7 +87,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   category: {
-    color: COLORS.text,
+    color: C.text,
     fontWeight: '700',
     fontSize: 15,
   },
@@ -104,11 +96,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   desc: {
-    color: COLORS.muted,
+    color: C.textSecondary,
     marginBottom: 6,
   },
   date: {
-    color: COLORS.muted,
+    color: C.textSecondary,
     fontSize: 12,
   },
 });

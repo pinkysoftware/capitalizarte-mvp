@@ -148,8 +148,9 @@ function AppContent() {
         try {
           // Hay token, verificamos que sea válido preguntando al servidor
           await api.getProfile();
-          // El token es válido, checked si hay un token de acceso
-          setInitialRouteName(getToken() ? 'Dashboard' : 'Login');
+          // El token es válido
+          const token = await getToken();
+          setInitialRouteName(token ? 'Dashboard' : 'Login');
         } catch {
           // El token no es válido o expiró
           await clearToken();

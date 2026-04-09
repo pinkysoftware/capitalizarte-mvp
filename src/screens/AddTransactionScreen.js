@@ -12,6 +12,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
+import { api } from '../services/api';
 
 const tipos = ['GASTO', 'INGRESO'];
 const naturalezas = ['FIJO', 'VARIABLE'];
@@ -36,7 +37,7 @@ export default function AddTransactionScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      await require('../services/api').api.addTx({
+      await api.addTx({
         tipo,
         naturaleza,
         categoria,

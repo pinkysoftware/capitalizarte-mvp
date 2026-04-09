@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { C, S, R, SHADOW, CATEGORY_EMOJI } from '../theme';
+import { api } from '../services/api';
 
 const CATEGORIES = ['Alimentacion', 'Transporte', 'Vivienda', 'Salud', 'Entretenimiento', 'Deuda', 'Inversion', 'Otro'];
 
@@ -47,8 +49,7 @@ export default function BudgetScreen({ navigation }) {
   const load = async () => {
     setLoading(true);
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const res = await require('../services/api').api.listTx(200);
+      const res = await api.listTx(200);
       const txs = res.transactions || [];
       const now = new Date();
       const thisMonth = txs.filter(t => {
@@ -70,7 +71,7 @@ export default function BudgetScreen({ navigation }) {
         setBudgets({ Alimentacion: 50000, Transporte: 20000, Entretenimiento: 15000 });
       }
     } catch (e) {
-      console.log('Error:', e.message);
+      Alert.alert('Error', 'No se pudieron cargar los presupuestos.');
     } finally {
       setLoading(false);
     }

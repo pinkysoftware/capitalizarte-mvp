@@ -11,6 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
+import { api } from '../services/api';
 import { parseNaturalTransaction, formatTransactionPreview } from '../services/naturalLanguageParser';
 
 const tipos = ['GASTO', 'INGRESO'];
@@ -50,7 +51,7 @@ export default function AddTransactionVoice({ navigation, route }) {
 
     setLoading(true);
     try {
-      await require('../services/api').api.addTx({
+      await api.addTx({
         tipo, naturaleza, categoria,
         monto: parseFloat(monto),
         descripcion: descripcion || '',
@@ -58,7 +59,7 @@ export default function AddTransactionVoice({ navigation, route }) {
       });
       navigation.goBack();
     } catch (e) {
-      require('react-native').Alert.alert('Error', e.message);
+      Alert.alert('Error', e.message);
     } finally {
       setLoading(false);
     }

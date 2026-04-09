@@ -1,20 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
-const COLORS = {
-  surface: '#141820',
-  surfaceSoft: '#1A1F2B',
-  text: '#E8E8E8',
-  muted: '#9A9FAA',
-  border: 'rgba(212, 160, 23, 0.22)',
-  green: '#2ECC40',
-  amber: '#D4A017',
-  red: '#E53935',
-};
+import { C, S, R } from '../theme';
 
 export default function FinancialBar({ value = 0 }) {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
-  const color = pct > 50 ? COLORS.green : pct >= 20 ? COLORS.amber : COLORS.red;
+  const color = pct > 50 ? C.green : pct >= 20 ? C.primary : C.red;
 
   return (
     <View style={styles.card}>
@@ -32,20 +22,20 @@ export default function FinancialBar({ value = 0 }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 16,
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: C.border,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: S.sm,
   },
   label: {
-    color: COLORS.text,
+    color: C.text,
     fontWeight: '700',
     fontSize: 15,
   },
@@ -55,7 +45,7 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 14,
-    backgroundColor: COLORS.surfaceSoft,
+    backgroundColor: C.surfaceHover,
     borderRadius: 999,
     overflow: 'hidden',
   },
@@ -64,8 +54,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   hint: {
-    marginTop: 10,
-    color: COLORS.muted,
+    marginTop: S.sm,
+    color: C.textSecondary,
     fontSize: 12,
     lineHeight: 17,
   },

@@ -10,7 +10,7 @@ import {
   Switch,
   ActivityIndicator,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, clearToken } from '../services/api';
 import { C, S, R } from '../theme';
 
 const investorLevels = ['Principiante', 'Intermedio', 'Avanzado'];
@@ -59,20 +59,30 @@ export default function ProfileScreen({ navigation }) {
   const set = (k, v) => setForm(s => ({ ...s, [k]: v }));
 
   const submit = async () => {
-    if (!form.nombre.trim()) return Alert.alert(' Nombre requerido', 'Ingresá tu nombre.');
+    if (!form.nombre.trim()) return Alert.alert('Nombre requerido', 'Ingresá tu nombre.');
     setSaving(true);
     try {
-      // TODO: call api.updateProfile when available
-      Alert.alert(' Guardado', 'Perfil actualizado correctamente.');
+      await api.updateProfile({
+        nombre: form.nombre,
+        apodo: form.apodo,
+        ciudad: form.ciudad,
+        pais: form.pais,
+        ocupacion: form.ocupacion,
+        ingreso_mensual: Number(form.ingreso_mensual) || 0,
+        gastos_fijos: Number(form.gastos_fijos) || 0,
+        gastos_variables: Number(form.gastos_variables) || 0,
+        nivel_inversor: form.nivel_inversor,
+      });
+      Alert.alert('Guardado', 'Perfil actualizado correctamente.');
     } catch (e) {
-      Alert.alert(' Error', e.message);
+      Alert.alert('Error', e.message);
     } finally {
       setSaving(false);
     }
   };
 
   const logout = async () => {
-    await require('../services/api').clearToken();
+    await clearToken();
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 

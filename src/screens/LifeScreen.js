@@ -46,7 +46,7 @@ export default function LifeScreen() {
         setProfile(profileRes.user || profileRes);
         setDashboard(dashRes);
       } catch (e) {
-        console.log('Error:', e.message);
+        Alert.alert('Error', 'No se pudo cargar los datos de vida financiera.');
       } finally {
         setLoading(false);
       }

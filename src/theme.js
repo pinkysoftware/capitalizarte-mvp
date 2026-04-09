@@ -82,6 +82,20 @@ export function muted(props = {}) {
 }
 
 // ============================================================================
+// SHADOW
+// ============================================================================
+
+export function SHADOW(opacity = 0.3) {
+  return {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: opacity,
+    shadowRadius: 8,
+    elevation: 5,
+  };
+}
+
+// ============================================================================
 // CATEGORÍAS
 // ============================================================================
 export const CATEGORY_EMOJI = {

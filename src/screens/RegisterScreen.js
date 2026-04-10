@@ -43,8 +43,14 @@ export default function RegisterScreen({ navigation }) {
     setSaving(true);
     try {
       const payload = {
-        ...form,
+        name: form.nombre,
         email: form.email.trim().toLowerCase(),
+        password: form.password,
+        apodo: form.apodo,
+        ciudad: form.ciudad,
+        pais: form.pais,
+        ocupacion: form.ocupacion,
+        nivel_inversor: form.nivel_inversor,
         ingreso_mensual: Number(form.ingreso_mensual || 0),
         gastos_fijos: Number(form.gastos_fijos || 0),
         gastos_variables: Number(form.gastos_variables || 0),

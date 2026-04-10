@@ -181,15 +181,11 @@ export const api = {
    * Body: { name, email, password }
    * Response: { token, user: { id, name, email } }
    */
-  async register({ name, email, password }) {
-    const data = await fetchApi('/register', {
+  register(payload) {
+    return fetchApi('/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify(payload),
     });
-    if (data.token) {
-      await setToken(data.token);
-    }
-    return data;
   },
 
   /**

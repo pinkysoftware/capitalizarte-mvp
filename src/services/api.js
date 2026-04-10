@@ -63,7 +63,7 @@ export const api = {
   addTx: (payload) => request('/transactions/index.php', { method: 'POST', body: JSON.stringify(payload) }),
   deleteTx: (id) => request(`/transactions/index.php?id=${id}`, { method: 'DELETE' }),
   listTx: (limit = 50) => request(`/transactions/index.php?limit=${limit}`),
-  dashboard: (month) => request(`/dashboard.php${month ? `?month=${month}` : ''}`),
+  getDashboard: (month) => request(`/dashboard.php${month ? `?month=${month}` : ''}`),
   requestPasswordReset: (payload) => request('/auth/recover.php', { method: 'POST', body: JSON.stringify(payload) }),
   resetPassword: (payload) => request('/auth/reset-password.php', { method: 'POST', body: JSON.stringify(payload) }),
 };

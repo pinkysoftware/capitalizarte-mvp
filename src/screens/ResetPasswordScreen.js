@@ -66,7 +66,11 @@ export default function ResetPasswordScreen({ navigation, route }) {
       Alert.alert('Clave actualizada', 'Ya podés ingresar con tu nueva contraseña.');
       navigation.navigate('Login');
     } catch (e) {
-      Alert.alert('No pudimos restablecer la clave', e.message);
+      if (e.message.includes('500') || e.message.includes('network') || e.message.includes('http')) {
+        Alert.alert('Servicio temporalmente indisponible', 'El servidor de recuperación de clave no responde. Intentá más tarde o contactá al administrador.');
+      } else {
+        Alert.alert('No pudimos restablecer la clave', e.message);
+      }
     } finally {
       setLoading(false);
     }

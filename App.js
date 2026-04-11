@@ -22,6 +22,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 // api: funciones para comunicarse con el servidor (login, registrar gasto, etc)
 // hydrateToken: intenta recuperar el token de sesión guardado anteriormente
 import { api, clearToken, getToken, hydrateToken } from './src/services/api';
+import { getUserProfile } from './src/services/userStorage';
 // ThemeProvider: contexto que permite cambiar entre tema oscuro y claro
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
@@ -146,13 +147,24 @@ function AppContent() {
         }
 
         try {
-          // Hay token, verificamos que sea válido preguntando al servidor
-          await api.getProfile();
-          // El token es válido
-          const token = await getToken();
-          setInitialRouteName(token ? 'Dashboard' : 'Login');
+          // Hay token, verificamos que sea válido leyendo perfil local
+          const localProfile = await getUserProfile();
+          if (localProfile && localProfile.email) {
+            // Perfil guardado localmente = sesión válida
+            setInitialRouteName('Dashboard');
+          } else {
+            // No hay perfil local, intentamos con API (puede fallar si el servidor no responde)
+            try {
+              await api.getProfile();
+              setInitialRouteName('Dashboard');
+            } catch {
+              // Token roto o servidor caído - limpiamos todo
+              await clearToken();
+              setInitialRouteName('Login');
+            }
+          }
         } catch {
-          // El token no es válido o expiró
+          // Fallback: si todo falla, vamos a login
           await clearToken();
           setInitialRouteName('Login');
         }

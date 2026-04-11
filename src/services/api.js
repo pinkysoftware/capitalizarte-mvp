@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE = 'https://www.capitalizarte.com/api';
 const AUTH_TOKEN_KEY = 'capitalizarte.authToken';
+const CHAT_HISTORY_KEY = 'capitalizarte.chatHistory';
+const REQUEST_TIMEOUT = 10000; // 10 seconds
 
 let authToken = null;
 
@@ -36,13 +38,25 @@ async function request(path, options = {}) {
   };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
   let res;
   let data = {};
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
     data = await res.json().catch(() => ({}));
-  } catch {
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      throw new Error('timeout');
+    }
     throw new Error('network_error');
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (res.status === 401) {
@@ -53,6 +67,35 @@ async function request(path, options = {}) {
     throw new Error(data.error || `http_${res.status}`);
   }
   return data;
+}
+
+// Chat - uses the backend chatbot endpoint
+export async function chat(message, history = []) {
+  return request('/chatbot.php', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+  });
+}
+
+// Chat history management
+export async function getChatHistory() {
+  const raw = await AsyncStorage.getItem(CHAT_HISTORY_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveChatHistory(history) {
+  // Keep only last 20 messages to avoid storage bloat
+  const trimmed = history.slice(-20);
+  await AsyncStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(trimmed));
+}
+
+export async function clearChatHistory() {
+  await AsyncStorage.removeItem(CHAT_HISTORY_KEY);
 }
 
 export const api = {

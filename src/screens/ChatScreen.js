@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { C, S, R } from '../theme';
+import { chat, getChatHistory, saveChatHistory, clearChatHistory } from '../services/api';
 
 const SUGGESTIONS = [
   '¿Cuánto gasté esta semana?',
@@ -43,28 +44,60 @@ function SuggestionChip({ text, onPress }) {
 
 export default function ChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
-    { role: 'ai', content: '👋 Hola, soy tu asistente financiero.\n\nPreguntame sobre tus finanzas. Por ej:\n• "¿Cuánto gasté en comida?"\n• "¿Cuál fue mi mayor gasto?"' }
+    { role: 'ai', content: '👋 Hola, soy tu asistente financiero de Capitalizarte.\n\nPreguntame sobre tus finanzas. Por ej:\n• "¿Cuánto gasté en comida?"\n• "¿Cuál fue mi mayor gasto?"' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef(null);
 
+  // Load chat history on mount
+  useEffect(() => {
+    (async () => {
+      const history = await getChatHistory();
+      if (history.length > 0) {
+        setMessages(prev => {
+          const base = prev[0]; // Keep welcome message
+          return [base, ...history];
+        });
+      }
+    })();
+  }, []);
+
   const send = async (text) => {
     if (!text.trim() || loading) return;
     const userMsg = text.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
 
+    // Add user message immediately
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+
     try {
-      await new Promise(r => setTimeout(r, 800));
-      let reply = `Entendí: "${userMsg}"\n\nEstoy en modo demo. Conectá la API real del chatbot para respuestas personalizadas.`;
+      // Get history for context (last 10 exchanges)
+      const history = messages.slice(-20).map(m => ({ role: m.role, content: m.content }));
+      
+      const res = await chat(userMsg, history);
+      const reply = res.reply || 'No pude obtener una respuesta. Intentá de nuevo.';
+
       setMessages(prev => [...prev, { role: 'ai', content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'ai', content: 'Tuve un problema. ¿Podés intentar de nuevo?' }]);
+
+      // Save to history (without welcome message)
+      const newHistory = [...history, { role: 'user', content: userMsg }, { role: 'ai', content: reply }];
+      await saveChatHistory(newHistory);
+
+    } catch (e) {
+      const errorMsg = e.message === 'timeout'
+        ? '⏱️ El servidor tardó demasiado. Intentá de nuevo.'
+        : '❌ Tuve un problema. ¿Podés intentar de nuevo?';
+      setMessages(prev => [...prev, { role: 'ai', content: errorMsg }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearChat = async () => {
+    await clearChatHistory();
+    setMessages([{ role: 'ai', content: '👋 Chat borrado. ¿En qué puedo ayudarte?' }]);
   };
 
   return (
@@ -74,6 +107,14 @@ export default function ChatScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
+        {/* Header with clear button */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Asistente AI</Text>
+          <Pressable onPress={clearChat} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>🗑️ Nuevo chat</Text>
+          </Pressable>
+        </View>
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -92,12 +133,14 @@ export default function ChatScreen({ navigation }) {
           }
           ListFooterComponent={loading ? (
             <View style={styles.typingRow}>
+              <Text style={styles.typingText}>El asistente está escribiendo...</Text>
               <ActivityIndicator color={C.primary} size="small" />
             </View>
           ) : null}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
           showsVerticalScrollIndicator={false}
         />
+
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
@@ -107,13 +150,14 @@ export default function ChatScreen({ navigation }) {
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
             returnKeyType="send"
+            editable={!loading}
           />
           <Pressable
-            style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
             onPress={() => send(input)}
-            disabled={!input.trim()}
+            disabled={!input.trim() || loading}
           >
-            <Text style={styles.sendBtnText}>→</Text>
+            <Text style={styles.sendBtnText}>➤</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -124,6 +168,18 @@ export default function ChatScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: S.md,
+    paddingVertical: S.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: C.text },
+  clearBtn: { padding: S.xs },
+  clearBtnText: { fontSize: 12, color: C.textSecondary },
   chatList: { padding: S.md, paddingBottom: S.sm, gap: S.sm },
   suggestions: { marginBottom: S.md, gap: S.sm },
   suggestionsLabel: { color: C.textSecondary, fontSize: 12, fontWeight: '600' },
@@ -146,7 +202,14 @@ const styles = StyleSheet.create({
   msgText: { fontSize: 14, lineHeight: 20 },
   msgTextAI: { color: C.text },
   msgTextUser: { color: '#000', fontWeight: '600' },
-  typingRow: { flexDirection: 'row', paddingHorizontal: S.md },
+  typingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.sm,
+    paddingHorizontal: S.md,
+    paddingVertical: S.xs,
+  },
+  typingText: { fontSize: 12, color: C.textSecondary },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { api, clearToken } from '../services/api';
+import { getUserProfile, saveUserProfile } from '../services/userStorage';
 import { C, S, R } from '../theme';
 
 const investorLevels = ['Principiante', 'Intermedio', 'Avanzado'];
@@ -35,22 +36,23 @@ export default function ProfileScreen({ navigation }) {
 
   const load = async () => {
     try {
-      const res = await api.getProfile().catch(e => ({ user: null }));
-      const u = (res?.user || res) || {};
-      setForm({
-        email: u.email || '',
-        nombre: u.nombre || '',
-        apodo: u.apodo || '',
-        ciudad: u.ciudad || '',
-        pais: u.pais || '',
-        ocupacion: u.ocupacion || '',
-        ingreso_mensual: String(u.ingreso_mensual || ''),
-        gastos_fijos: String(u.gastos_fijos || ''),
-        gastos_variables: String(u.gastos_variables || ''),
-        nivel_inversor: u.nivel_inversor || 'Principiante',
-      });
+      const u = await getUserProfile();
+      if (u) {
+        setForm({
+          email: u.email || '',
+          nombre: u.nombre || '',
+          apodo: u.apodo || '',
+          ciudad: u.ciudad || '',
+          pais: u.pais || '',
+          ocupacion: u.ocupacion || '',
+          ingreso_mensual: String(u.ingreso_mensual || ''),
+          gastos_fijos: String(u.gastos_fijos || ''),
+          gastos_variables: String(u.gastos_variables || ''),
+          nivel_inversor: u.nivel_inversor || 'Principiante',
+        });
+      }
     } catch (e) {
-      Alert.alert('Error', e.message);
+      // silent fail
     } finally {
       setLoading(false);
     }
@@ -62,17 +64,20 @@ export default function ProfileScreen({ navigation }) {
     if (!form.nombre.trim()) return Alert.alert('Nombre requerido', 'Ingresá tu nombre.');
     setSaving(true);
     try {
-      await api.updateProfile({
-        nombre: form.nombre,
-        apodo: form.apodo,
-        ciudad: form.ciudad,
-        pais: form.pais,
-        ocupacion: form.ocupacion,
+      const updatedProfile = {
+        ...form,
         ingreso_mensual: Number(form.ingreso_mensual) || 0,
         gastos_fijos: Number(form.gastos_fijos) || 0,
         gastos_variables: Number(form.gastos_variables) || 0,
-        nivel_inversor: form.nivel_inversor,
-      });
+      };
+      // Save locally first (works offline)
+      await saveUserProfile(updatedProfile);
+      // Try to sync with server (may fail if server is down)
+      try {
+        await api.updateProfile(updatedProfile);
+      } catch {
+        // Server sync failed but local save worked - that's OK for now
+      }
       Alert.alert('Guardado', 'Perfil actualizado correctamente.');
     } catch (e) {
       Alert.alert('Error', e.message);

@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { api, setToken } from '../services/api';
-import { saveUserEmail } from '../services/userStorage';
+import { saveUserEmail, saveUserProfile } from '../services/userStorage';
 import { isValidEmail } from '../services/validators';
 import { C, S, R, SHADOW } from '../theme';
 
@@ -69,6 +69,7 @@ export default function RegisterScreen({ navigation }) {
       const res = await api.register(payload);
       await setToken(res.token);
       if (res.user?.email) await saveUserEmail(res.user.email);
+      if (res.user) await saveUserProfile(res.user);
       navigation.replace('Dashboard');
     } catch (e) {
       Alert.alert(' Error', e.message);

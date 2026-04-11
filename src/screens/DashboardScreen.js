@@ -13,6 +13,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, clearToken } from '../services/api';
+import { getUserProfile } from '../services/userStorage';
 import { C, S, R, SHADOW, h1, h2, muted, CATEGORY_EMOJI } from '../theme';
 
 function Avatar({ uri, name, onPress }) {
@@ -120,12 +121,12 @@ export default function DashboardScreen({ navigation }) {
     setRefreshing(true);
     setLoading(true);
     try {
-      const [dashRes, profileRes] = await Promise.all([
+      const [dashRes, localProfile] = await Promise.all([
         api.getDashboard().catch(e => ({ saldo: 0, ingresos: 0, gastos: 0, salud_financiera: 0, ultimas_transacciones: [] })),
-        api.getProfile().catch(e => ({ user: null }))
+        getUserProfile()
       ]);
       setData(dashRes);
-      setProfile(profileRes.user || profileRes);
+      setProfile(localProfile);
     } catch (e) {
       Alert.alert('Error', e.message);
     } finally {

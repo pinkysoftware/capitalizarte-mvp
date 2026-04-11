@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
+import { getUserProfile } from '../services/userStorage';
 import { C, S, R, SHADOW } from '../theme';
 
 const AVATARS = { '1': '🧑💼', '2': '🧑🎓', '3': '🧑🚀', '4': '🧑🔧', '5': '🧑💻' };
@@ -39,11 +40,11 @@ export default function LifeScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [profileRes, dashRes] = await Promise.all([
-        api.getProfile().catch(() => null),
-        api.getDashboard().catch(() => null)
-      ]);
-        setProfile(profileRes.user || profileRes);
+        const [localProfile, dashRes] = await Promise.all([
+          getUserProfile(),
+          api.getDashboard().catch(() => null)
+        ]);
+        setProfile(localProfile);
         setDashboard(dashRes);
       } catch (e) {
         Alert.alert('Error', 'No se pudo cargar los datos de vida financiera.');

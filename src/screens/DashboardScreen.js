@@ -255,40 +255,19 @@ export default function DashboardScreen({ navigation }) {
           />
         )}
 
-        {/* Bottom hint */}
-        <View style={styles.hintRow}>
-          <Pressable style={styles.hintBtn} onPress={() => navigation.navigate('AddTransactionVoice')}>
-            <Text style={styles.hintIcon}>🎤</Text>
-            <Text style={styles.hintText}>Registro por voz</Text>
-          </Pressable>
-          <Pressable style={styles.hintBtn} onPress={() => navigation.navigate('Chat')}>
-            <Text style={styles.hintIcon}>🤖</Text>
-            <Text style={styles.hintText}>Asistente AI</Text>
-          </Pressable>
-          <Pressable style={styles.hintBtn} onPress={() => navigation.navigate('Budget')}>
-            <Text style={styles.hintIcon}>📊</Text>
-            <Text style={styles.hintText}>Presupuestos</Text>
-          </Pressable>
-        </View>
+        {/* Hint row replaced by FAB - removed for simplicity */}
 
       </ScrollView>
 
-      {/* Bottom Tab */}
+      {/* Bottom Tab - simplified: 3 items */}
       <View style={[styles.bottomTab, { paddingBottom: insets.bottom + S.sm }]}>
-        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Life')}>
-          <Text style={styles.tabIcon}>⚖️</Text>
-          <Text style={styles.tabLabel}>Balance</Text>
+        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Dashboard')}>
+          <Text style={styles.tabIcon}>🏠</Text>
+          <Text style={styles.tabLabel}>Inicio</Text>
         </Pressable>
-        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Savings')}>
-          <Text style={styles.tabIcon}>💰</Text>
-          <Text style={styles.tabLabel}>Ahorros</Text>
-        </Pressable>
-        <Pressable style={styles.tabItemPrimary} onPress={() => navigation.navigate('AddTransactionVoice')}>
-          <Text style={styles.tabIconPrimary}>+</Text>
-        </Pressable>
-        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Chat')}>
+        <Pressable style={[styles.tabItem, styles.tabItemActive]} onPress={() => navigation.navigate('Chat')}>
           <Text style={styles.tabIcon}>🤖</Text>
-          <Text style={styles.tabLabel}>AI</Text>
+          <Text style={[styles.tabLabel, styles.tabLabelActive]}>AI</Text>
         </Pressable>
         <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.tabIcon}>👤</Text>
@@ -386,16 +365,8 @@ const styles = StyleSheet.create({
     ...SHADOW(0.3),
   },
   tabItem: { flex: 1, alignItems: 'center', gap: 4 },
-  tabIcon: { fontSize: 20 },
+  tabIcon: { fontSize: 22 },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontWeight: '600' },
-  tabItemPrimary: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: C.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -24,
-  },
-  tabIconPrimary: { fontSize: 28, fontWeight: '300', color: '#000' },
+  tabItemActive: { opacity: 1 },
+  tabLabelActive: { color: C.primary },
 });

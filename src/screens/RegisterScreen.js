@@ -33,12 +33,22 @@ export default function RegisterScreen({ navigation }) {
     nivel_inversor: 'Principiante',
   });
 
-  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const numericFields = ['ingreso_mensual', 'gastos_fijos', 'gastos_variables'];
+
+  const set = (k, v) => {
+    if (numericFields.includes(k)) {
+      v = v.replace(/[^0-9.,]/g, '').replace(',', '.');
+    }
+    setForm((s) => ({ ...s, [k]: v }));
+  };
 
   const submit = async () => {
     if (!isValidEmail(form.email.trim().toLowerCase())) return Alert.alert(' Email inválido', 'Ingresá un correo válido.');
     if (!form.password || form.password.length < 6) return Alert.alert(' Contraseña débil', 'Usá al menos 6 caracteres.');
     if (!form.nombre.trim()) return Alert.alert(' Falta nombre', 'Ingresá tu nombre.');
+    if (isNaN(Number(form.ingreso_mensual))) return Alert.alert(' Dato inválido', 'Ingresá un número válido en Ingreso mensual.');
+    if (isNaN(Number(form.gastos_fijos))) return Alert.alert(' Dato inválido', 'Ingresá un número válido en Gastos fijos.');
+    if (isNaN(Number(form.gastos_variables))) return Alert.alert(' Dato inválido', 'Ingresá un número válido en Gastos variables.');
 
     setSaving(true);
     try {

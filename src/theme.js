@@ -91,7 +91,10 @@ export function SHADOW(opacity = 0.3) {
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: opacity,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 8,
+    // Fallback lateral para Android (compensa ausencia de shadowOffset horizontal)
+    borderWidth: 0.5,
+    borderColor: `rgba(0, 0, 0, ${opacity * 0.4})`,
   };
 }
 

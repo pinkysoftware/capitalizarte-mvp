@@ -8,8 +8,10 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, clearToken } from '../services/api';
 import { C, S, R, SHADOW, h1, h2, muted, CATEGORY_EMOJI } from '../theme';
 
@@ -18,9 +20,7 @@ function Avatar({ uri, name, onPress }) {
   return (
     <Pressable style={styles.avatar} onPress={onPress}>
       {uri ? (
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarInitial}>{initial}</Text>
-        </View>
+        <Image source={{ uri }} style={[styles.avatarCircle, { resizeMode: 'cover' }]} />
       ) : (
         <View style={styles.avatarCircle}>
           <Text style={styles.avatarInitial}>{initial}</Text>
@@ -62,12 +62,63 @@ function TransactionRow({ item, onDelete }) {
   );
 }
 
+function SkeletonBlock({ width = '100%', height = 16, radius = 8 }) {
+  return (
+    <View style={{ backgroundColor: C.surfaceHover, borderRadius: radius, width, height }} />
+  );
+}
+
+function SkeletonUI() {
+  return (
+    <View style={[styles.screen, styles.content]}>
+      <View style={styles.header}>
+        <View style={{ gap: 6 }}>
+          <SkeletonBlock width={140} height={28} />
+          <SkeletonBlock width={100} height={14} />
+        </View>
+        <SkeletonBlock width={44} height={44} radius={22} />
+      </View>
+      <View style={styles.balanceCard}>
+        <SkeletonBlock width={80} height={13} />
+        <SkeletonBlock width={180} height={36} radius={10} />
+        <SkeletonBlock width="100%" height={4} radius={2} />
+        <SkeletonBlock width={100} height={12} />
+      </View>
+      <View style={styles.summaryRow}>
+        <SkeletonBlock height={72} radius={R.md} />
+        <SkeletonBlock height={72} radius={R.md} />
+      </View>
+      <View style={styles.actionsRow}>
+        <SkeletonBlock height={48} radius={R.md} />
+        <SkeletonBlock height={48} radius={R.md} />
+      </View>
+      <View style={{ gap: 8 }}>
+        <SkeletonBlock width={80} height={18} />
+        {[1, 2, 3, 4].map(i => (
+          <View key={i} style={{ flexDirection: 'row', gap: S.sm, alignItems: 'center' }}>
+            <SkeletonBlock width={40} height={40} radius={12} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <SkeletonBlock width="60%" height={15} />
+              <SkeletonBlock width="40%" height={13} />
+            </View>
+            <SkeletonBlock width={70} height={15} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function DashboardScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
   const [profile, setProfile] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    setLoading(true);
     try {
       const [dashRes, profileRes] = await Promise.all([
         api.getDashboard().catch(e => ({ saldo: 0, ingresos: 0, gastos: 0, salud_financiera: 0, ultimas_transacciones: [] })),
@@ -77,10 +128,15 @@ export default function DashboardScreen({ navigation }) {
       setProfile(profileRes.user || profileRes);
     } catch (e) {
       Alert.alert('Error', e.message);
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, []));
+  useFocusEffect(useCallback(() => {
+    load();
+  }, [load]));
 
   const logout = async () => {
     await clearToken();
@@ -99,6 +155,21 @@ export default function DashboardScreen({ navigation }) {
   const name = profile?.apodo || profile?.nombre || 'Capitalizador';
   const txs = Array.isArray(data?.ultimas_transacciones) ? data.ultimas_transacciones : [];
   const health = data?.salud_financiera || 0;
+
+  if (loading) {
+    return (
+      <View style={styles.screen}>
+        <SkeletonUI />
+        <View style={[styles.bottomTab, { paddingBottom: insets.bottom + S.sm }]}>
+          <View style={styles.tabItem}><Text style={styles.tabIcon}>⚖️</Text><Text style={styles.tabLabel}>Balance</Text></View>
+          <View style={styles.tabItem}><Text style={styles.tabIcon}>💰</Text><Text style={styles.tabLabel}>Ahorros</Text></View>
+          <View style={styles.tabItemPrimary}><Text style={styles.tabIconPrimary}>+</Text></View>
+          <View style={styles.tabItem}><Text style={styles.tabIcon}>🤖</Text><Text style={styles.tabLabel}>AI</Text></View>
+          <View style={styles.tabItem}><Text style={styles.tabIcon}>👤</Text><Text style={styles.tabLabel}>Perfil</Text></View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -172,11 +243,15 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.emptySub}>Agregá tu primer ingreso o gasto</Text>
           </View>
         ) : (
-          <View style={styles.txList}>
-            {txs.slice(0, 8).map((item) => (
-              <TransactionRow key={item.id} item={item} onDelete={() => confirmDelete(item)} />
-            ))}
-          </View>
+          <FlatList
+            data={txs.slice(0, 8)}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => (
+              <TransactionRow item={item} onDelete={() => confirmDelete(item)} />
+            )}
+            scrollEnabled={false}
+            style={styles.txList}
+          />
         )}
 
         {/* Bottom hint */}
@@ -198,7 +273,7 @@ export default function DashboardScreen({ navigation }) {
       </ScrollView>
 
       {/* Bottom Tab */}
-      <View style={styles.bottomTab}>
+      <View style={[styles.bottomTab, { paddingBottom: insets.bottom + S.sm }]}>
         <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Life')}>
           <Text style={styles.tabIcon}>⚖️</Text>
           <Text style={styles.tabLabel}>Balance</Text>

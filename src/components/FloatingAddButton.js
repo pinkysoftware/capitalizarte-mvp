@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { C, R, S } from '../theme';
 
@@ -9,10 +9,10 @@ export default function FloatingAddButton({ bottom = 100 }) {
   return (
     <Pressable
       style={[styles.fab, { bottom }]}
-      onPress={() => navigation.navigate('AddTransaction')}
+      onPress={() => navigation.navigate('AddTransactionVoice')}
       hitSlop={10}
     >
-      <Text style={styles.fabText}>+</Text>
+      <Text style={styles.fabIcon}>🎤</Text>
     </Pressable>
   );
 }
@@ -21,23 +21,23 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: S.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
     zIndex: 999,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  fabText: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: '#000',
-    marginTop: -2,
+  fabIcon: {
+    fontSize: 26,
+    textAlign: 'center',
   },
 });

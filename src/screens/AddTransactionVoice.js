@@ -119,14 +119,18 @@ export default function AddTransactionVoice({ navigation, route }) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: Platform.OS === 'ios' ? 300 : 150 }]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
+          ref={(r) => { this.scrollRef = r; }}
         >
+          {/* Add some top padding for when keyboard is shown */}
+          <View style={{ height: Platform.OS === 'ios' ? 60 : 20 }} />
 
           {/* Tipo toggle */}
           <View style={styles.toggleRow}>

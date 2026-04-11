@@ -105,10 +105,10 @@ export default function ChatScreen({ navigation }) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header with clear button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 47 : 40 }]}>
           <Text style={styles.headerTitle}>Asistente AI</Text>
           <Pressable onPress={clearChat} style={styles.clearBtn}>
             <Text style={styles.clearBtnText}>🗑️ Nuevo chat</Text>

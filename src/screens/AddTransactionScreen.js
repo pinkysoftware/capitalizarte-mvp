@@ -58,14 +58,16 @@ export default function AddTransactionScreen({ navigation, route }) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: Platform.OS === 'ios' ? 300 : 150 }]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
+          <View style={{ height: Platform.OS === 'ios' ? 60 : 20 }} />
           {/* Tipo */}
           <View style={styles.toggleRow}>
             {tipos.map(t => (

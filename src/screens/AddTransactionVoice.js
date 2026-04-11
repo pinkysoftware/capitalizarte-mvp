@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
 import { api } from '../services/api';

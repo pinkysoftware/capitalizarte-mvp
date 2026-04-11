@@ -6,10 +6,11 @@ import {
   Pressable,
   StyleSheet,
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { C, S, R } from '../theme';
 import { chat, getChatHistory, saveChatHistory, clearChatHistory } from '../services/api';
@@ -48,7 +49,32 @@ export default function ChatScreen({ navigation }) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const flatListRef = useRef(null);
+
+  // Keyboard tracking
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setIsKeyboardVisible(true);
+    });
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // Scroll to end when keyboard shows
+  useEffect(() => {
+    if (isKeyboardVisible) {
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [isKeyboardVisible]);
 
   // Load chat history on mount
   useEffect(() => {
@@ -56,7 +82,7 @@ export default function ChatScreen({ navigation }) {
       const history = await getChatHistory();
       if (history.length > 0) {
         setMessages(prev => {
-          const base = prev[0]; // Keep welcome message
+          const base = prev[0];
           return [base, ...history];
         });
       }
@@ -69,22 +95,18 @@ export default function ChatScreen({ navigation }) {
     setInput('');
     setLoading(true);
 
-    // Add user message immediately
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
 
     try {
-      // Get history for context (last 10 exchanges)
       const history = messages.slice(-20).map(m => ({ role: m.role, content: m.content }));
-      
       const res = await chat(userMsg, history);
       const reply = res.reply || 'No pude obtener una respuesta. Intentá de nuevo.';
-
       setMessages(prev => [...prev, { role: 'ai', content: reply }]);
 
-      // Save to history (without welcome message)
       const newHistory = [...history, { role: 'user', content: userMsg }, { role: 'ai', content: reply }];
       await saveChatHistory(newHistory);
 
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e) {
       const errorMsg = e.message === 'timeout'
         ? '⏱️ El servidor tardó demasiado. Intentá de nuevo.'
@@ -100,47 +122,48 @@ export default function ChatScreen({ navigation }) {
     setMessages([{ role: 'ai', content: '👋 Chat borrado. ¿En qué puedo ayudarte?' }]);
   };
 
+  const inputBarPaddingBottom = isKeyboardVisible ? keyboardHeight + 10 : 30;
+
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        {/* Header with clear button */}
-        <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 47 : 40 }]}>
-          <Text style={styles.headerTitle}>Asistente AI</Text>
-          <Pressable onPress={clearChat} style={styles.clearBtn}>
-            <Text style={styles.clearBtnText}>🗑️ Nuevo chat</Text>
-          </Pressable>
-        </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Asistente AI</Text>
+        <Pressable onPress={clearChat} style={styles.clearBtn}>
+          <Text style={styles.clearBtnText}>🗑️ Nuevo chat</Text>
+        </Pressable>
+      </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(_, i) => i.toString()}
-          renderItem={({ item }) => <Message role={item.role} content={item.content} />}
-          contentContainerStyle={styles.chatList}
-          ListHeaderComponent={
-            <View style={styles.suggestions}>
-              <Text style={styles.suggestionsLabel}>Sugerencias</Text>
-              <View style={styles.chips}>
-                {SUGGESTIONS.map((s, i) => (
-                  <SuggestionChip key={i} text={s} onPress={() => send(s)} />
-                ))}
-              </View>
+      {/* Messages list - flat, no KeyboardAvoidingView wrapping it */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(_, i) => i.toString()}
+        renderItem={({ item }) => <Message role={item.role} content={item.content} />}
+        contentContainerStyle={[styles.chatList, { paddingBottom: isKeyboardVisible ? 20 : 100 }]}
+        ListHeaderComponent={
+          <View style={styles.suggestions}>
+            <Text style={styles.suggestionsLabel}>Sugerencias</Text>
+            <View style={styles.chips}>
+              {SUGGESTIONS.map((s, i) => (
+                <SuggestionChip key={i} text={s} onPress={() => send(s)} />
+              ))}
             </View>
-          }
-          ListFooterComponent={loading ? (
-            <View style={styles.typingRow}>
-              <Text style={styles.typingText}>El asistente está escribiendo...</Text>
-              <ActivityIndicator color={C.primary} size="small" />
-            </View>
-          ) : null}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          showsVerticalScrollIndicator={false}
-        />
+          </View>
+        }
+        ListFooterComponent={loading ? (
+          <View style={styles.typingRow}>
+            <Text style={styles.typingText}>El asistente está escribiendo...</Text>
+            <ActivityIndicator color={C.primary} size="small" />
+          </View>
+        ) : null}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => Keyboard.dismiss()}
+      />
 
+      {/* Input bar - fixed at bottom with keyboard-aware padding */}
+      <View style={[styles.inputWrap, { paddingBottom: inputBarPaddingBottom }]}>
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
@@ -151,6 +174,7 @@ export default function ChatScreen({ navigation }) {
             onSubmitEditing={() => send(input)}
             returnKeyType="send"
             editable={!loading}
+            blurOnSubmit={false}
           />
           <Pressable
             style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
@@ -160,14 +184,13 @@ export default function ChatScreen({ navigation }) {
             <Text style={styles.sendBtnText}>➤</Text>
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -180,7 +203,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '700', color: C.text },
   clearBtn: { padding: S.xs },
   clearBtnText: { fontSize: 12, color: C.textSecondary },
-  chatList: { padding: S.md, paddingBottom: S.sm, gap: S.sm },
+  chatList: { padding: S.md, gap: S.sm },
   suggestions: { marginBottom: S.md, gap: S.sm },
   suggestionsLabel: { color: C.textSecondary, fontSize: 12, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: S.xs },
@@ -210,14 +233,24 @@ const styles = StyleSheet.create({
     paddingVertical: S.xs,
   },
   typingText: { fontSize: 12, color: C.textSecondary },
+  inputWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: C.bg,
+    paddingHorizontal: S.sm,
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: S.sm,
-    padding: S.sm,
+    paddingVertical: S.sm,
     backgroundColor: C.surface,
     borderTopWidth: 1,
     borderTopColor: C.border,
+    borderRadius: R.full,
+    paddingHorizontal: S.sm,
   },
   textInput: {
     flex: 1,

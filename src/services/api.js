@@ -56,8 +56,8 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  register: (payload) => request('/auth/register.php', { method: 'POST', body: JSON.stringify(payload) }),
-  login: (payload) => request('/auth/login.php', { method: 'POST', body: JSON.stringify(payload) }),
+  register: (payload) => request('/register.php', { method: 'POST', body: JSON.stringify(payload) }),
+  login: (payload) => request('/login.php', { method: 'POST', body: JSON.stringify(payload) }),
   getProfile: () => request('/user/profile.php'),
   updateProfile: (payload) => request('/user/profile.php', { method: 'PUT', body: JSON.stringify(payload) }),
   addTx: (payload) => request('/transactions/index.php', { method: 'POST', body: JSON.stringify(payload) }),

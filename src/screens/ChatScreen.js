@@ -53,11 +53,15 @@ export default function ChatScreen({ navigation }) {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const flatListRef = useRef(null);
 
-  // Keyboard tracking
+  // Keyboard tracking - use keyboardDidShow for accurate final height
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
       setKeyboardHeight(e.endCoordinates.height);
       setIsKeyboardVisible(true);
+      // Force scroll to bottom after keyboard is fully shown
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true, duration: 200 });
+      }, 50);
     });
     const hideSub = Keyboard.addListener('keyboardWillHide', () => {
       setKeyboardHeight(0);
@@ -68,6 +72,13 @@ export default function ChatScreen({ navigation }) {
       hideSub.remove();
     };
   }, []);
+
+  // Scroll to bottom whenever messages change (new ai or user message)
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: false }), 10);
+    }
+  }, [messages.length]);
 
   // Scroll to end when keyboard shows
   useEffect(() => {
@@ -122,10 +133,10 @@ export default function ChatScreen({ navigation }) {
     setMessages([{ role: 'ai', content: '👋 Chat borrado. ¿En qué puedo ayudarte?' }]);
   };
 
-  const inputBarPaddingBottom = isKeyboardVisible ? keyboardHeight + 10 : 30;
+  const inputBarPaddingBottom = isKeyboardVisible ? keyboardHeight + 20 : 30;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { height: Dimensions.get('window').height }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Asistente AI</Text>
@@ -134,13 +145,14 @@ export default function ChatScreen({ navigation }) {
         </Pressable>
       </View>
 
-      {/* Messages list - flat, no KeyboardAvoidingView wrapping it */}
+      {/* Messages list - stays above input bar */}
       <FlatList
         ref={flatListRef}
         data={messages}
         keyExtractor={(_, i) => i.toString()}
         renderItem={({ item }) => <Message role={item.role} content={item.content} />}
-        contentContainerStyle={[styles.chatList, { paddingBottom: isKeyboardVisible ? 20 : 100 }]}
+        contentContainerStyle={{ paddingBottom: inputBarPaddingBottom }}
+        style={styles.messageList}
         ListHeaderComponent={
           <View style={styles.suggestions}>
             <Text style={styles.suggestionsLabel}>Sugerencias</Text>
@@ -157,33 +169,31 @@ export default function ChatScreen({ navigation }) {
             <ActivityIndicator color={C.primary} size="small" />
           </View>
         ) : null}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => Keyboard.dismiss()}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
       />
 
-      {/* Input bar - fixed at bottom with keyboard-aware padding */}
-      <View style={[styles.inputWrap, { paddingBottom: inputBarPaddingBottom }]}>
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Preguntame algo..."
-            placeholderTextColor={C.textTertiary}
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={() => send(input)}
-            returnKeyType="send"
-            editable={!loading}
-            blurOnSubmit={false}
-          />
-          <Pressable
-            style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
-            onPress={() => send(input)}
-            disabled={!input.trim() || loading}
-          >
-            <Text style={styles.sendBtnText}>➤</Text>
-          </Pressable>
-        </View>
+      {/* Input bar - fixed at bottom */}
+      <View style={styles.inputBar}>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Preguntame algo..."
+          placeholderTextColor={C.textTertiary}
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={() => send(input)}
+          returnKeyType="send"
+          editable={!loading}
+          blurOnSubmit={false}
+        />
+        <Pressable
+          style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
+          onPress={() => send(input)}
+          disabled={!input.trim() || loading}
+        >
+          <Text style={styles.sendBtnText}>➤</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -203,6 +213,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '700', color: C.text },
   clearBtn: { padding: S.xs },
   clearBtnText: { fontSize: 12, color: C.textSecondary },
+  messageList: { flex: 1 },
   chatList: { padding: S.md, gap: S.sm },
   suggestions: { marginBottom: S.md, gap: S.sm },
   suggestionsLabel: { color: C.textSecondary, fontSize: 12, fontWeight: '600' },
@@ -233,24 +244,15 @@ const styles = StyleSheet.create({
     paddingVertical: S.xs,
   },
   typingText: { fontSize: 12, color: C.textSecondary },
-  inputWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: C.bg,
-    paddingHorizontal: S.sm,
-  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: S.sm,
     paddingVertical: S.sm,
+    paddingHorizontal: S.sm,
     backgroundColor: C.surface,
     borderTopWidth: 1,
     borderTopColor: C.border,
-    borderRadius: R.full,
-    paddingHorizontal: S.sm,
   },
   textInput: {
     flex: 1,

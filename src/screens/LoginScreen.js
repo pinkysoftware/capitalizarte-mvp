@@ -14,6 +14,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { api, setToken } from '../services/api';
+import { saveUserEmail } from '../services/userStorage';
 import { C, S, R } from '../theme';
 
 export default function LoginScreen({ navigation }) {
@@ -29,6 +30,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const res = await api.login({ email: email.trim().toLowerCase(), password });
       await setToken(res.token);
+      if (res.user?.email) await saveUserEmail(res.user.email);
       navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
     } catch (e) {
       Alert.alert(' Error de acceso', e.message);

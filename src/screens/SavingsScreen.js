@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
 import { loadSavings, saveSavings } from '../services/savingsStorage';
+import { getUserEmail, saveUserEmail } from '../services/userStorage';
 import { C, S, R } from '../theme';
 
 const TYPES = ['efectivo', 'caja_ahorro', 'usd', 'fondo_emergencia', 'otro'];
@@ -19,12 +20,26 @@ export default function SavingsScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.getProfile();
-        const userEmail = res.user?.email || '';
-        setEmail(userEmail);
-        setItems(await loadSavings(userEmail));
+        const userEmail = await getUserEmail();
+        if (userEmail) {
+          setEmail(userEmail);
+          setItems(await loadSavings(userEmail));
+        } else {
+          // Fallback: get from profile (may fail if server broken)
+          try {
+            const res = await api.getProfile();
+            const email = res.user?.email || '';
+            await saveUserEmail(email);
+            setEmail(email);
+            setItems(await loadSavings(email));
+          } catch {
+            // Silently fail if profile also fails
+            setItems([]);
+          }
+        }
       } catch (e) {
-        Alert.alert('No pudimos cargar ahorros', e.message);
+        // Silent fail - just show empty
+        setItems([]);
       }
     })();
   }, []);

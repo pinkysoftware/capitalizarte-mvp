@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,22 +6,21 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   Alert,
   Vibration,
+  Dimensions,
 } from 'react-native';
 import { C, S, R, CATEGORY_EMOJI } from '../theme';
 import { api } from '../services/api';
 import { parseNaturalTransaction, formatTransactionPreview } from '../services/naturalLanguageParser';
 
-const tipos = ['GASTO', 'INGRESO'];
-const naturalezas = ['FIJO', 'VARIABLE'];
-const expenseCategories = ['Alimentacion', 'Transporte', 'Vivienda', 'Salud', 'Entretenimiento', 'Deuda', 'Inversion', 'Otro'];
-const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
-
-// Quick suggestions for fast input
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const TIPO_GASTO = 'GASTO';
+const TIPO_INGRESO = 'INGRESO';
 const QUICK_GASTOS = [
   { label: 'Café', emoji: '☕', monto: '4.50' },
   { label: 'Comida', emoji: '🍔', monto: '15' },
@@ -33,21 +32,51 @@ const QUICK_INGRESOS = [
   { label: 'Freelance', emoji: '💻', monto: '50' },
   { label: 'Venta', emoji: '🛒', monto: '25' },
 ];
+const expenseCategories = ['Alimentacion', 'Transporte', 'Vivienda', 'Salud', 'Entretenimiento', 'Deuda', 'Inversion', 'Otro'];
+const incomeCategories = ['Salario', 'Ventas', 'Freelance', 'Comision', 'Interes', 'Otro'];
 
 export default function AddTransactionVoice({ navigation, route }) {
   const rawTipo = route?.params?.tipo;
-  const tipoInicial = (rawTipo && String(rawTipo).length > 0) ? String(rawTipo) : 'GASTO';
+  const tipoInicial = (rawTipo && String(rawTipo).length > 0) ? String(rawTipo) : TIPO_GASTO;
+  const [tipo, setTipo] = useState(tipoInicial);
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [tipo, setTipo] = useState(tipoInicial);
-  const [naturaleza, setNaturaleza] = useState('VARIABLE');
+  const [naturaleza] = useState('VARIABLE');
   const [categoria, setCategoria] = useState('');
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [confirmado, setConfirmado] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const inputRef = React.useRef(null);
 
-  const handleChange = (text) => {
+  // Keyboard listeners
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setIsKeyboardVisible(true);
+    });
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // Scroll to input when keyboard shows
+  useEffect(() => {
+    if (isKeyboardVisible && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isKeyboardVisible]);
+
+  const handleInputChange = (text) => {
     setInput(text);
     const result = parseNaturalTransaction(text);
     if (result && result.monto > 0) {
@@ -86,9 +115,7 @@ export default function AddTransactionVoice({ navigation, route }) {
       });
       setConfirmado(true);
       Vibration.vibrate([0, 50, 50, 50]);
-      setTimeout(() => {
-        navigation.goBack();
-      }, 800);
+      setTimeout(() => navigation.goBack(), 800);
     } catch (e) {
       Alert.alert('Error', e.message);
     } finally {
@@ -96,19 +123,23 @@ export default function AddTransactionVoice({ navigation, route }) {
     }
   };
 
-  const categories = tipo === 'INGRESO' ? incomeCategories : expenseCategories;
-  const quickItems = tipo === 'INGRESO' ? QUICK_INGRESOS : QUICK_GASTOS;
+  const categories = tipo === TIPO_INGRESO ? incomeCategories : expenseCategories;
+  const quickItems = tipo === TIPO_INGRESO ? QUICK_INGRESOS : QUICK_GASTOS;
+  // Extra bottom padding when keyboard is visible - enough to show the input above keyboard
+  const bottomPad = isKeyboardVisible ? keyboardHeight + 120 : 120;
 
   if (confirmado) {
     return (
-      <SafeAreaView style={styles.confirmScreen}>
-        <View style={styles.confirmCard}>
-          <Text style={styles.confirmEmoji}>✅</Text>
-          <Text style={styles.confirmTitle}>¡Registrado!</Text>
-          <Text style={styles.confirmAmount}>
-            {tipo === 'INGRESO' ? '+' : '-'}${parseFloat(monto).toLocaleString('es-AR')}
-          </Text>
-          <Text style={styles.confirmCat}>{categoria}</Text>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.confirmScreen}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmEmoji}>✅</Text>
+            <Text style={styles.confirmTitle}>¡Registrado!</Text>
+            <Text style={styles.confirmAmount}>
+              {tipo === TIPO_INGRESO ? '+' : '-'}${parseFloat(monto).toLocaleString('es-AR')}
+            </Text>
+            <Text style={styles.confirmCat}>{categoria}</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -116,33 +147,29 @@ export default function AddTransactionVoice({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
+      {/* Extra view to push content up when keyboard is visible */}
+      <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.content, { paddingBottom: Platform.OS === 'ios' ? 300 : 150 }]}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomPad }]}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           ref={(r) => { this.scrollRef = r; }}
+          onScrollBeginDrag={() => Keyboard.dismiss()}
         >
-          {/* Add some top padding for when keyboard is shown */}
-          <View style={{ height: Platform.OS === 'ios' ? 60 : 20 }} />
+          {/* Spacer for when keyboard shows - pushes content up */}
+          {isKeyboardVisible && <View style={{ height: 20 }} />}
 
           {/* Tipo toggle */}
           <View style={styles.toggleRow}>
-            {tipos.map(t => (
+            {[{ k: TIPO_GASTO, label: '↓ Gasto' }, { k: TIPO_INGRESO, label: '↑ Ingreso' }].map(({ k, label }) => (
               <Pressable
-                key={t}
-                style={[styles.toggleBtn, tipo === t && (t === 'INGRESO' ? styles.toggleGreen : styles.toggleRed)]}
-                onPress={() => { setTipo(t); setCategoria(''); setParsed(null); }}
+                key={k}
+                style={[styles.toggleBtn, tipo === k && (k === TIPO_INGRESO ? styles.toggleGreen : styles.toggleRed)]}
+                onPress={() => { setTipo(k); setCategoria(''); setParsed(null); }}
               >
-                <Text style={[styles.toggleText, tipo === t && styles.toggleTextActive]}>
-                  {t === 'INGRESO' ? '↑ Ingreso' : '↓ Gasto'}
-                </Text>
+                <Text style={[styles.toggleText, tipo === k && styles.toggleTextActive]}>{label}</Text>
               </Pressable>
             ))}
           </View>
@@ -157,7 +184,7 @@ export default function AddTransactionVoice({ navigation, route }) {
               value={monto}
               onChangeText={setMonto}
               keyboardType="decimal-pad"
-              autoFocus={!monto}
+              ref={inputRef}
             />
           </View>
 
@@ -169,7 +196,7 @@ export default function AddTransactionVoice({ navigation, route }) {
               placeholder='"Café $4.50" o "Comida 500"'
               placeholderTextColor={C.textTertiary}
               value={input}
-              onChangeText={handleChange}
+              onChangeText={handleInputChange}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -217,8 +244,10 @@ export default function AddTransactionVoice({ navigation, route }) {
             value={descripcion}
             onChangeText={setDescripcion}
           />
+        </ScrollView>
 
-          {/* Submit */}
+        {/* Submit fixed at bottom, above keyboard */}
+        <View style={[styles.submitWrap, { paddingBottom: isKeyboardVisible ? keyboardHeight + 10 : 30 }]}>
           <Pressable
             style={[styles.submitBtn, (!monto || !categoria || loading) && styles.submitBtnDisabled]}
             onPress={handleSubmit}
@@ -226,18 +255,16 @@ export default function AddTransactionVoice({ navigation, route }) {
           >
             <Text style={styles.submitBtnText}>{loading ? 'Guardando...' : '✅ Confirmar'}</Text>
           </Pressable>
-
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  container: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: S.lg, gap: S.lg },
+  content: { padding: S.lg, gap: S.lg, paddingTop: S.md },
 
   toggleRow: { flexDirection: 'row', gap: S.sm },
   toggleBtn: {
@@ -348,6 +375,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
+  submitWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: S.lg,
+    backgroundColor: C.bg,
+  },
   submitBtn: {
     backgroundColor: C.primary,
     borderRadius: R.lg,
@@ -357,8 +392,7 @@ const styles = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#000', fontSize: 16, fontWeight: '800' },
 
-  // Confirm screen
-  confirmScreen: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  confirmScreen: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   confirmCard: { alignItems: 'center', gap: S.md },
   confirmEmoji: { fontSize: 64 },
   confirmTitle: { fontSize: 28, fontWeight: '800', color: C.text },

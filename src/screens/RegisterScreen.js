@@ -53,7 +53,7 @@ export default function RegisterScreen({ navigation }) {
     setSaving(true);
     try {
       const payload = {
-        name: form.nombre,
+        nombre: form.nombre,
         email: form.email.trim().toLowerCase(),
         password: form.password,
         apodo: form.apodo,

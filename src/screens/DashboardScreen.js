@@ -163,8 +163,6 @@ export default function DashboardScreen({ navigation }) {
         <SkeletonUI />
         <View style={[styles.bottomTab, { paddingBottom: insets.bottom + S.sm }]}>
           <View style={styles.tabItem}><Text style={styles.tabIcon}>⚖️</Text><Text style={styles.tabLabel}>Balance</Text></View>
-          <View style={styles.tabItem}><Text style={styles.tabIcon}>💰</Text><Text style={styles.tabLabel}>Ahorros</Text></View>
-          <View style={styles.tabItemPrimary}><Text style={styles.tabIconPrimary}>+</Text></View>
           <View style={styles.tabItem}><Text style={styles.tabIcon}>🤖</Text><Text style={styles.tabLabel}>AI</Text></View>
           <View style={styles.tabItem}><Text style={styles.tabIcon}>👤</Text><Text style={styles.tabLabel}>Perfil</Text></View>
         </View>
@@ -290,15 +288,15 @@ export default function DashboardScreen({ navigation }) {
 
       </ScrollView>
 
-      {/* Bottom Tab - simplified: 3 items */}
+      {/* Bottom Tab - 3 items: Balance, AI, Perfil */}
       <View style={[styles.bottomTab, { paddingBottom: insets.bottom + S.sm }]}>
-        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Dashboard')}>
-          <Text style={styles.tabIcon}>🏠</Text>
-          <Text style={styles.tabLabel}>Inicio</Text>
+        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Life')}>
+          <Text style={styles.tabIcon}>⚖️</Text>
+          <Text style={styles.tabLabel}>Balance</Text>
         </Pressable>
-        <Pressable style={[styles.tabItem, styles.tabItemActive]} onPress={() => navigation.navigate('Chat')}>
+        <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Chat')}>
           <Text style={styles.tabIcon}>🤖</Text>
-          <Text style={[styles.tabLabel, styles.tabLabelActive]}>AI</Text>
+          <Text style={styles.tabLabel}>AI</Text>
         </Pressable>
         <Pressable style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.tabIcon}>👤</Text>

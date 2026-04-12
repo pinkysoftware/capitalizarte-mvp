@@ -55,16 +55,27 @@ export default function LifeScreen() {
   }, []);
 
   const metrics = useMemo(() => {
-    const gastosFijos = Number(dashboard?.gastos || 0) || Number(profile?.gastos_fijos || 0);
+    // Use ONLY fixed expenses from dashboard (not total gastos which includes variable)
+    const gastosFijos = Number(dashboard?.gastos_fijos || 0);
+    const ingresosFijos = Number(dashboard?.ingresos_fijos || 0);
+    // For income reference, use fixed income (salary) - more accurate for "days of life" calculation
+    // If no fixed income, fall back to user's configured ingreso_mensual from profile
+    const ingresoReferencia = ingresosFijos > 0 
+      ? ingresosFijos 
+      : Number(profile?.ingreso_mensual || 0);
     const saldo = Number(dashboard?.saldo || 0);
     const now = new Date();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    // Costo por día = fixed monthly expenses / days in month
     const costoDelDia = daysInMonth > 0 ? gastosFijos / daysInMonth : 0;
+    // Días de vida = how many days your current balance can cover fixed expenses
     const diasDeVida = costoDelDia > 0 ? saldo / costoDelDia : 0;
     const diasCubiertos = Math.max(0, diasDeVida);
     const diasAdeudados = Math.max(0, Math.abs(diasDeVida < 0 ? diasDeVida : 0));
+    // Health = days covered as percentage of month (30 days = 100%)
+    const saludFinanciera = Math.min(100, (diasCubiertos / daysInMonth) * 100);
     const barMax = Math.max(daysInMonth, diasCubiertos, diasAdeudados, 1);
-    return { gastosFijos, saldo, daysInMonth, costoDelDia, diasDeVida, diasCubiertos, diasAdeudados, barMax };
+    return { gastosFijos, ingresoReferencia, saldo, daysInMonth, costoDelDia, diasDeVida, diasCubiertos, diasAdeudados, saludFinanciera, barMax };
   }, [profile, dashboard]);
 
   if (loading) {
@@ -106,7 +117,7 @@ export default function LifeScreen() {
         <Text style={styles.sectionTitle}>Barras de vida</Text>
         <LifeBar label="Días cubiertos" value={metrics.diasCubiertos} max={metrics.barMax} color={C.green} />
         <LifeBar label="Días adeudados" value={metrics.diasAdeudados} max={metrics.barMax} color={C.red} />
-        <LifeBar label="Salud financiera" value={Number(dashboard?.salud_financiera || 0)} max={100} color={metrics.diasDeVida < 0 ? C.red : C.primary} />
+        <LifeBar label="Salud financiera" value={metrics.saludFinanciera} max={100} color={metrics.diasDeVida < 0 ? C.red : C.green} />
       </View>
     </ScrollView>
   );

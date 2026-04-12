@@ -192,17 +192,48 @@ export default function DashboardScreen({ navigation }) {
           </Pressable>
         </View>
 
-        {/* Balance Card */}
+        {/* Balance Card - improved with clear net */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Balance actual</Text>
-          <Text style={styles.balanceAmount}>
-            ${Number(data?.saldo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+          <Text style={[
+            styles.balanceAmount,
+            (data?.saldo || 0) >= 0 ? { color: C.green } : { color: C.red }
+          ]}>
+            {(data?.saldo || 0) >= 0 ? '+' : ''}${Number(data?.saldo || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
           </Text>
           <View style={styles.healthBar}>
             <View style={[styles.healthFill, { width: `${Math.min(health, 100)}%` }]} />
           </View>
           <Text style={styles.healthLabel}>Salud financiera: {health}%</Text>
         </View>
+
+        {/* FIJO vs VARIABLE breakdown */}
+        {(data?.ingresos_fijos > 0 || data?.gastos_fijos > 0) && (
+          <View style={styles.breakdownRow}>
+            {data?.ingresos_fijos > 0 && (
+              <View style={[styles.breakdownCard, { borderLeftColor: C.green, borderLeftWidth: 3 }]}>
+                <Text style={styles.breakdownLabel}>Ingresos fijos del mes</Text>
+                <Text style={[styles.breakdownAmount, { color: C.green }]}>
+                  +${Number(data?.ingresos_fijos || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                </Text>
+                {data?.ingresos_variables > 0 && (
+                  <Text style={styles.breakdownHint}>+ ${Number(data?.ingresos_variables || 0).toLocaleString('es-AR')} variables</Text>
+                )}
+              </View>
+            )}
+            {data?.gastos_fijos > 0 && (
+              <View style={[styles.breakdownCard, { borderLeftColor: C.red, borderLeftWidth: 3 }]}>
+                <Text style={styles.breakdownLabel}>Gastos fijos del mes</Text>
+                <Text style={[styles.breakdownAmount, { color: C.red }]}>
+                  -${Number(data?.gastos_fijos || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                </Text>
+                {data?.gastos_variables > 0 && (
+                  <Text style={styles.breakdownHint}>- ${Number(data?.gastos_variables || 0).toLocaleString('es-AR')} variables</Text>
+                )}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Ingresos / Gastos */}
         <View style={styles.summaryRow}>
@@ -311,6 +342,13 @@ const styles = StyleSheet.create({
   summaryCard: { flex: 1, borderRadius: R.md, padding: S.md },
   summaryLabel: { ...muted(), fontSize: 12, marginBottom: 4 },
   summaryAmount: { fontSize: 18, fontWeight: '700' },
+  
+  // Breakdown Row
+  breakdownRow: { flexDirection: 'row', gap: S.sm },
+  breakdownCard: { flex: 1, backgroundColor: C.surface, borderRadius: R.md, padding: S.md },
+  breakdownLabel: { fontSize: 11, color: C.textSecondary, fontWeight: '600', marginBottom: 4 },
+  breakdownAmount: { fontSize: 16, fontWeight: '700' },
+  breakdownHint: { fontSize: 11, color: C.textSecondary, marginTop: 2 },
   
   // Actions
   actionsRow: { flexDirection: 'row', gap: S.sm },

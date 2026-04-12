@@ -42,6 +42,7 @@ export default function BudgetScreen({ navigation }) {
   const [budgets, setBudgets] = useState({});
   const [spending, setSpending] = useState({});
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useFocusEffect(React.useCallback(() => {
     load();
@@ -78,9 +79,24 @@ export default function BudgetScreen({ navigation }) {
     }
   };
 
-  const totalSpent = Object.keys(budgets).reduce((s, cat) => s + (spending[cat] || 0), 0);
-  const totalBudget = Object.values(budgets).reduce((s, v) => s + v, 0);
-  const overallPct = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+  // Filter budgets based on selected tab
+  const filteredBudgets = Object.keys(budgets).filter(cat => {
+    if (filter === 'all') return true;
+    // For simplicity, filter based on category default nature
+    // Alimentacion, Transporte, Entretenimiento = VARIABLE
+    // Vivienda, Salud = FIJO
+    if (filter === 'FIJO') return ['Vivienda', 'Salud', 'Deuda'].includes(cat);
+    if (filter === 'VARIABLE') return ['Alimentacion', 'Transporte', 'Entretenimiento', 'Inversion', 'Otro'].includes(cat);
+    return true;
+  });
+
+  // Calculate total spent for filtered view
+  const filteredSpent = filteredBudgets.reduce((s, cat) => s + (spending[cat] || 0), 0);
+  const filteredBudget = filteredBudgets.reduce((s, cat) => s + (budgets[cat] || 0), 0);
+  const overallPct = filteredBudget > 0 ? Math.min((filteredSpent / filteredBudget) * 100, 100) : 0;
+
+  const totalSpent = filteredSpent;
+  const totalBudget = filteredBudget;
 
   if (loading) {
     return <View style={styles.loading}><ActivityIndicator color={C.primary} size="large" /></View>;
@@ -92,18 +108,44 @@ export default function BudgetScreen({ navigation }) {
       {/* Overview */}
       <View style={styles.overview}>
         <Text style={styles.overviewLabel}>Total gastado</Text>
-        <Text style={styles.overviewAmount}>${totalSpent.toLocaleString('es-AR', { minimumFractionDigits: 0 })}</Text>
+        <Text style={[styles.overviewAmount, totalSpent > totalBudget && { color: C.red }]}>
+          ${totalSpent.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+        </Text>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${overallPct}%`, backgroundColor: overallPct > 90 ? C.red : C.primary }]} />
         </View>
         <Text style={styles.overviewHint}>de ${totalBudget.toLocaleString('es-AR', { minimumFractionDigits: 0 })} presupuesto</Text>
+        {overallPct > 100 && <Text style={[styles.overviewAlert, { color: C.red }]}>⚠️ Excediste tu presupuesto en ${(totalSpent - totalBudget).toLocaleString('es-AR')}</Text>}
+      </View>
+
+      {/* Filter tabs */}
+      <View style={styles.filterRow}>
+        <Pressable style={[styles.filterBtn, filter === 'all' && styles.filterBtnActive]} onPress={() => setFilter('all')}>
+          <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>Todos</Text>
+        </Pressable>
+        <Pressable style={[styles.filterBtn, filter === 'FIJO' && styles.filterBtnActive]} onPress={() => setFilter('FIJO')}>
+          <Text style={[styles.filterText, filter === 'FIJO' && styles.filterTextActive]}>Fijos</Text>
+        </Pressable>
+        <Pressable style={[styles.filterBtn, filter === 'VARIABLE' && styles.filterBtnActive]} onPress={() => setFilter('VARIABLE')}>
+          <Text style={[styles.filterText, filter === 'VARIABLE' && styles.filterTextActive]}>Variables</Text>
+        </Pressable>
       </View>
 
       {/* Bars */}
       <Text style={styles.sectionTitle}>Por categoría</Text>
-      {Object.keys(budgets).map(cat => (
+      {filteredBudgets.map(cat => (
         <BudgetBar key={cat} categoria={cat} gastado={spending[cat] || 0} limite={budgets[cat]} />
       ))}
+
+      {/* Unbudgeted spending - what you spent but didn't set a budget */}
+      {Object.keys(spending).filter(cat => !budgets[cat] && spending[cat] > 0).length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sin presupuesto</Text>
+          {Object.keys(spending).filter(cat => !budgets[cat] && spending[cat] > 0).map(cat => (
+            <BudgetBar key={cat} categoria={cat} gastado={spending[cat] || 0} limite={0} />
+          ))}
+        </View>
+      )}
 
       {/* Sin presupuesto */}
       {CATEGORIES.filter(c => !budgets[c] && (spending[c] || 0) > 0).map(cat => (
@@ -129,8 +171,15 @@ const styles = StyleSheet.create({
   overviewLabel: { color: C.textSecondary, fontSize: 13 },
   overviewAmount: { fontSize: 32, fontWeight: '800', color: C.text },
   overviewHint: { color: C.textSecondary, fontSize: 13 },
+  overviewAlert: { fontSize: 13, fontWeight: '700', marginTop: 4 },
   track: { height: 6, backgroundColor: C.border, borderRadius: 3 },
   fill: { height: '100%', borderRadius: 3 },
+  
+  filterRow: { flexDirection: 'row', gap: S.sm },
+  filterBtn: { flex: 1, paddingVertical: 10, borderRadius: R.md, backgroundColor: C.surface, alignItems: 'center', borderWidth: 1, borderColor: C.border },
+  filterBtnActive: { backgroundColor: C.primary, borderColor: C.primary },
+  filterText: { fontSize: 14, fontWeight: '600', color: C.textSecondary },
+  filterTextActive: { color: '#000' },
   
   sectionTitle: { fontSize: 18, fontWeight: '700', color: C.text },
   

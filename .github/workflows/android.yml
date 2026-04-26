@@ -24,9 +24,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm install metro metro-config @react-native/metro-config --legacy-peer-deps
+        run: npm ci
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -34,34 +32,19 @@ jobs:
       - name: Create JS Bundle
         run: |
           mkdir -p android/app/src/main/assets
-          npx react-native bundle \
+          npx expo export:embed \
             --platform android \
-            --dev false \
             --entry-file index.js \
             --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res \
-            --minify true \
-            2>&1
-
-      - name: Check bundle
-        run: |
-          if [ -f android/app/src/main/assets/index.android.bundle ]; then
-            echo "SUCCESS: Bundle created"
-            ls -lh android/app/src/main/assets/
-          else
-            echo "FAIL: Bundle not created"
-            ls -la android/app/src/main/assets/ 2>/dev/null
-            exit 1
-          fi
+            --dev false
 
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon 2>&1 | tail -40
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: capitalizarte-apk

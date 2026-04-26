@@ -42,7 +42,19 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/gradle-output.txt
+          echo "---LAST 30 LINES---"
+          tail -30 /tmp/gradle-output.txt
+
+      - name: Check for APK
+        run: |
+          if [ -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK FOUND!"
+            ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          else
+            echo "APK NOT FOUND"
+            find android -name "*.apk" 2>/dev/null | head -5
+          fi
 
       - name: Upload APK
         if: always()

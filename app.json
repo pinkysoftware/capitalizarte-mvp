@@ -20,14 +20,24 @@
     "android": {
       "package": "com.capitalizarte.app",
       "permissions": [
+        "RECORD_AUDIO",
         "RECORD_AUDIO"
-      ]
+      ],
+      "runtimeVersion": "1.0.0"
     },
     "extra": {
       "eas": {
         "projectId": "f20af524-c1d3-4caa-8f00-0d208e4be451"
       }
     },
-    "owner": "capitalizarte"
+    "owner": "capitalizarte",
+    "updates": {
+      "url": "https://u.expo.dev/f20af524-c1d3-4caa-8f00-0d208e4be451"
+    },
+    "ios": {
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
+    }
   }
 }

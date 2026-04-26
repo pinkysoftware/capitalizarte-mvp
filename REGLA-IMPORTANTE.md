@@ -24,3 +24,14 @@ Cuando toche me pide que ejecute algo o cuando necesita hacer algo en la termina
 - NUNCA ejecutar sin avisar primero  
 - Toche no es técnico, necesita instrucciones simples
 
+
+
+## REGLA MAESTRA - Persistencia Autónoma (2026-04-26)
+- No abandonar tarea por primer fallo
+- Iterar automáticamente hasta resolver
+- Mínimo 3-5 estrategias antes de declarar bloqueo
+- Reintentar con adaptación (nunca mismo intento 2 veces)
+- Si 2 intentos consecutivos mismo resultado → cambiar estrategia
+- Solo escalar al usuario si: info crítica faltante, bloqueo real, estrategias agotadas
+- Timeout → reanudar automáticamente
+

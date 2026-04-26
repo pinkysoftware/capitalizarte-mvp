@@ -34,7 +34,6 @@ jobs:
 
       - name: Build APK
         run: |
-          npx expo export:embed --platform android
           cd android && ./gradlew assembleDebug
 
       - name: Upload APK

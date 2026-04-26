@@ -36,13 +36,23 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Prebuild Android
+      - name: Create local.properties with SDK path
         run: |
-          npx expo prebuild --platform android --clean
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      - name: Create JS bundle
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file node_modules/expo/AppEntry.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
 
       - name: Build APK
         run: |
-          cd android && ./gradlew assembleDebug
+          cd android && ./gradlew assembleDebug -x createBundleDebugJsAndAssets
 
       - name: Upload APK to artifacts
         uses: actions/upload-artifact@v4

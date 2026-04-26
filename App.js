@@ -68,21 +68,43 @@ const lightTheme = {
  */
 function useDeepLink() {
   const [deepLinkRoute, setDeepLinkRoute] = useState(null);
+  const [deepLinkParams, setDeepLinkParams] = useState(null);
 
   useEffect(() => {
-    // Handler que se ejecuta cuando la app recibe una URL
-    const handleUrl = (event) => {
+    // URL token extractor - uses simple string parsing for React Native compatibility
+    function extractTokenFromUrl(url) {
+      // Simple regex fallback - works on all platforms
+      const match = url.match(/[?&]token=([a-f0-9]{64})/i);
+      if (match) return match[1];
+      return null;
+    }
+
+    function handleUrl(event) {
       const url = event.url || '';
-      // Si la URL contiene "reset-password" o "login", mostramos Login
-      if (url.includes('reset-password') || url.includes('login') || url.includes('screen=login')) {
-        setDeepLinkRoute('Login');
+      if (url.includes('reset-password') || url.includes('reset_password')) {
+        const token = extractTokenFromUrl(url);
+        if (token) {
+          setDeepLinkParams({ token });
+          setDeepLinkRoute('ResetPassword');
+        } else {
+          setDeepLinkRoute('Login');
+        }
       }
-    };
+    }
 
     //getInitialURL: verifica si la app se abrió con una URL (ej: desde un email)
     Linking.getInitialURL().then((url) => {
-      if (url && (url.includes('reset-password') || url.includes('login'))) {
-        setDeepLinkRoute('Login');
+      if (url) {
+        console.log('Initial URL:', url);
+        if (url.includes('reset-password') || url.includes('reset_password')) {
+          const token = extractTokenFromUrl(url);
+          if (token) {
+            setDeepLinkParams({ token });
+            setDeepLinkRoute('ResetPassword');
+          } else {
+            setDeepLinkRoute('Login');
+          }
+        }
       }
     });
 
@@ -92,7 +114,7 @@ function useDeepLink() {
     return () => subscription.remove();
   }, []);
 
-  return deepLinkRoute;
+  return { deepLinkRoute, deepLinkParams };
 }
 
 /**
@@ -114,7 +136,7 @@ function AppContent() {
   const [initialRouteName, setInitialRouteName] = useState('Login');
   
   // deepLinkRoute: si came de un link, lo guardamos aquí
-  const deepLinkRoute = useDeepLink();
+  const { deepLinkRoute, deepLinkParams } = useDeepLink();
 
   // useEffect: se ejecuta cuando deepLinkRoute cambia
   useEffect(() => {

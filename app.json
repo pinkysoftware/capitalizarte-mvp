@@ -1,10 +1,11 @@
 {
   "expo": {
     "name": "Capitalizarte",
-    "slug": "capitalizarte-app-mvp",
+    "slug": "capitalizarte",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "scheme": "capitalizarte",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
@@ -13,13 +14,20 @@
       "**/*"
     ],
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      "expo-web-browser"
     ],
     "android": {
       "package": "com.capitalizarte.app",
       "permissions": [
         "RECORD_AUDIO"
       ]
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f20af524-c1d3-4caa-8f00-0d208e4be451"
+      }
+    },
+    "owner": "capitalizarte"
   }
 }

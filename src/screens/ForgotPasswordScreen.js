@@ -46,16 +46,14 @@ export default function ForgotPasswordScreen({ navigation }) {
     setLoading(true);
     try {
       const res = await api.requestPasswordReset({ email: safeEmail });
-      if (res?.ok === false) {
-        Alert.alert('Correo no registrado', 'Este correo no está registrado en la app.');
-      } else if (res?.message === 'recovery_email_sent') {
+      if (res?.error) {
+        Alert.alert('Error', res.error);
+      } else {
         Alert.alert(
           'Revisá tu correo',
           `Te enviamos un mail a ${safeEmail}.\n\nEl mail tiene el token para restablecer tu clave.\n\nSi no llega, revisá spam.`
         );
         navigation.navigate('ResetPassword');
-      } else {
-        Alert.alert('Error', 'No pudimos procesar la solicitud.');
       }
     } catch (e) {
       Alert.alert('No pudimos iniciar la recuperación', e.message);

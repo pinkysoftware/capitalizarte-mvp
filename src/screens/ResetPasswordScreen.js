@@ -43,13 +43,14 @@ function Field({ label, value, onChangeText, placeholder }) {
 }
 
 export default function ResetPasswordScreen({ navigation, route }) {
-  const initialToken = route?.params?.token || '';
-  const [token, setToken] = useState(initialToken);
+  // Accept token from navigation params (manual entry) or deep link
+  const [token, setToken] = useState(route?.params?.token || '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // If deep link provided token directly, use it
     if (route?.params?.token) {
       setToken(route.params.token);
     }

@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npx expo install --fix
+          npm install @react-native-community/cli@latest --legacy-peer-deps
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -34,45 +34,27 @@ jobs:
       - name: Create JS Bundle
         run: |
           mkdir -p android/app/src/main/assets
-          npx expo export --platform android --output-dir dist
-          ls -la dist/
-          ls -la dist/_expo/static/js/android/ 2>/dev/null || echo "Checking bundle location..."
-          find dist -name "*.hbc" -o -name "*.bundle" 2>/dev/null | head -5
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res \
+            2>&1
 
-      - name: Copy Bundle
-        run: |
-          HBC_FILE=$(find dist -name "*.hbc" 2>/dev/null | head -1)
-          if [ -n "$HBC_FILE" ]; then
-            cp "$HBC_FILE" android/app/src/main/assets/index.android.bundle
-          else
-            JS_FILE=$(find dist -name "*.js" 2>/dev/null | head -1)
-            if [ -n "$JS_FILE" ]; then
-              cp "$JS_FILE" android/app/src/main/assets/index.android.bundle
-            else
-              echo "No bundle found!"
-              exit 1
-            fi
-          fi
-          ls -lh android/app/src/main/assets/
+      - name: Verify bundle
+        run: ls -lh android/app/src/main/assets/
 
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -50
+          ./gradlew assembleDebug --no-daemon 2>&1 | tail -30
 
       - name: Verify APK
-        run: |
-          APK=$(find android -name "*.apk" 2>/dev/null | head -1)
-          if [ -n "$APK" ]; then
-            ls -lh "$APK"
-          else
-            echo "No APK found!"
-            ls -la android/app/build/outputs/ 2>/dev/null || echo "No outputs dir"
-          fi
+        run: ls -lh android/app/build/outputs/apk/debug/ 2>/dev/null || echo "APK dir not found"
 
       - name: Upload APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: capitalizarte-apk

@@ -24,7 +24,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          npm install --legacy-peer-deps
+          cat node_modules/expo-modules-core/package.json | grep '"version"'
 
       - name: Setup Android SDK
         run: |

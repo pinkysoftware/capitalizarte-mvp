@@ -19,6 +19,7 @@
     "expo-haptics": "~12.8.1",
     "expo-image": "~1.10.6",
     "expo-image-picker": "~14.7.1",
+    "expo-modules-core": "1.11.14",
     "expo-speech": "~11.7.0",
     "expo-splash-screen": "~0.26.5",
     "expo-status-bar": "~1.11.1",

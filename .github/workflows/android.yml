@@ -1,0 +1,64 @@
+name: Android APK Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Create JS Bundle
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx expo export:embed \
+            --platform android \
+            --entry-file index.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --dev false
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-output.txt
+          echo "---GRADLE ERROR CONTEXT---"
+          grep -B5 -A5 "error:" /tmp/gradle-output.txt | tail -40 || grep -B10 "FAILURE" /tmp/gradle-output.txt | tail -30
+
+      - name: Check for APK
+        run: |
+          if [ -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK FOUND!"
+            ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          else
+            echo "APK NOT FOUND"
+            find android -name "*.apk" 2>/dev/null | head -5
+          fi
+
+      - name: Upload APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capitalizarte-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
